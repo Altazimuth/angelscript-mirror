@@ -34,7 +34,7 @@
 //
 // These functions handle the actual calling of system functions on the arm64 platform
 //
-// Written by Max Waine in June 2009, based on as_callfunc_arm.cpp
+// Written by Max Waine in July 2020, based on as_callfunc_arm.cpp
 //
 
 
@@ -285,11 +285,11 @@ END_AS_NAMESPACE
 
 BEGIN_AS_NAMESPACE
 
-extern "C" asQWORD armFunc          (const asDWORD *, int, asFUNCTION_t);
-extern "C" asQWORD armFuncR0        (const asDWORD *, int, asFUNCTION_t, asDWORD r0);
-extern "C" asQWORD armFuncR0R1      (const asDWORD *, int, asFUNCTION_t, asDWORD r0, asDWORD r1);
-extern "C" asQWORD armFuncObjLast   (const asDWORD *, int, asFUNCTION_t, asDWORD obj);
-extern "C" asQWORD armFuncR0ObjLast (const asDWORD *, int, asFUNCTION_t, asDWORD r0, asDWORD obj);
+extern "C" asQWORD arm64Func          (const asDWORD *, int, asFUNCTION_t);
+extern "C" asQWORD arm64FuncR0        (const asDWORD *, int, asFUNCTION_t, asDWORD r0);
+extern "C" asQWORD arm64FuncR0R1      (const asDWORD *, int, asFUNCTION_t, asDWORD r0, asDWORD r1);
+extern "C" asQWORD arm64FuncObjLast   (const asDWORD *, int, asFUNCTION_t, asDWORD obj);
+extern "C" asQWORD arm64FuncR0ObjLast (const asDWORD *, int, asFUNCTION_t, asDWORD r0, asDWORD obj);
 
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &/*retQW2*/, void *secondObject)
 {
@@ -580,33 +580,33 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	{
 	case ICC_CDECL_RETURNINMEM:     // fall through
 	case ICC_STDCALL_RETURNINMEM:
-		retQW = armFuncR0(args, paramSize<<2, func, (asDWORD)retPointer);
+		retQW = arm64FuncR0(args, paramSize<<2, func, (asDWORD)retPointer);
 		break;
 	case ICC_CDECL:     // fall through
 	case ICC_STDCALL:
-		retQW = armFunc(args, paramSize<<2, func);
+		retQW = arm64Func(args, paramSize<<2, func);
 		break;
 	case ICC_THISCALL:  // fall through
 	case ICC_CDECL_OBJFIRST:
 	case ICC_THISCALL_OBJFIRST:
 	case ICC_THISCALL_OBJLAST:
-		retQW = armFuncR0(args, paramSize<<2, func, (asDWORD)obj);
+		retQW = arm64FuncR0(args, paramSize<<2, func, (asDWORD)obj);
 		break;
 	case ICC_THISCALL_RETURNINMEM:
 	case ICC_THISCALL_OBJFIRST_RETURNINMEM:
 	case ICC_THISCALL_OBJLAST_RETURNINMEM:
 		// On GNUC the address where the return value will be placed should be put in R0
-		retQW = armFuncR0R1(args, paramSize<<2, func, (asDWORD)retPointer, (asDWORD)obj);
+		retQW = arm64FuncR0R1(args, paramSize<<2, func, (asDWORD)retPointer, (asDWORD)obj);
 		break;
 	case ICC_CDECL_OBJFIRST_RETURNINMEM:
-		retQW = armFuncR0R1(args, paramSize<<2, func, (asDWORD)retPointer, (asDWORD)obj);
+		retQW = arm64FuncR0R1(args, paramSize<<2, func, (asDWORD)retPointer, (asDWORD)obj);
 		break;
 	case ICC_VIRTUAL_THISCALL:
 	case ICC_VIRTUAL_THISCALL_OBJFIRST:
 	case ICC_VIRTUAL_THISCALL_OBJLAST:
 		// Get virtual function table from the object pointer
 		vftable = *(asFUNCTION_t**)obj;
-		retQW = armFuncR0(args, paramSize<<2, vftable[FuncPtrToUInt(func)>>2], (asDWORD)obj);
+		retQW = arm64FuncR0(args, paramSize<<2, vftable[FuncPtrToUInt(func)>>2], (asDWORD)obj);
 		break;
 	case ICC_VIRTUAL_THISCALL_RETURNINMEM:
 	case ICC_VIRTUAL_THISCALL_OBJFIRST_RETURNINMEM:
@@ -614,13 +614,13 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		// Get virtual function table from the object pointer
 		vftable = *(asFUNCTION_t**)obj;
 		// On GNUC the address where the return value will be placed should be put in R0
-		retQW = armFuncR0R1(args, (paramSize+1)<<2, vftable[FuncPtrToUInt(func)>>2], (asDWORD)retPointer, (asDWORD)obj);
+		retQW = arm64FuncR0R1(args, (paramSize+1)<<2, vftable[FuncPtrToUInt(func)>>2], (asDWORD)retPointer, (asDWORD)obj);
 		break;
 	case ICC_CDECL_OBJLAST:
-		retQW = armFuncObjLast(args, paramSize<<2, func, (asDWORD)obj);
+		retQW = arm64FuncObjLast(args, paramSize<<2, func, (asDWORD)obj);
 		break;
 	case ICC_CDECL_OBJLAST_RETURNINMEM:
-		retQW = armFuncR0ObjLast(args, paramSize<<2, func, (asDWORD)retPointer, (asDWORD)obj);
+		retQW = arm64FuncR0ObjLast(args, paramSize<<2, func, (asDWORD)retPointer, (asDWORD)obj);
 		break;
 	default:
 		context->SetInternalException(TXT_INVALID_CALLING_CONVENTION);

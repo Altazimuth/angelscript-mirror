@@ -208,6 +208,9 @@
 // AS_ARM
 // Use assembler code for the ARM CPU family
 
+// AS_ARM64
+// Use assembler code for the ARM64/AArch64 CPU family
+
 // AS_SOFTFP
 // Use to tell compiler that ARM soft-float ABI
 // should be used instead of ARM hard-float ABI
@@ -500,6 +503,10 @@
 		#if defined(_WIN32_WCE)
 			#define AS_SOFTFP
 		#endif
+	#endif
+
+	#if defined(_M_ARM64)
+		#define AS_ARM64
 	#endif
 
 	#ifndef COMPLEX_MASK
@@ -1196,7 +1203,7 @@
 
 // If there are no current support for native calling
 // conventions, then compile with AS_MAX_PORTABILITY
-#if (!defined(AS_X86) && !defined(AS_SH4) && !defined(AS_MIPS) && !defined(AS_PPC) && !defined(AS_PPC_64) && !defined(AS_XENON) && !defined(AS_X64_GCC) && !defined(AS_X64_MSVC) && !defined(AS_ARM) && !defined(AS_X64_MINGW))
+#if (!defined(AS_X86) && !defined(AS_SH4) && !defined(AS_MIPS) && !defined(AS_PPC) && !defined(AS_PPC_64) && !defined(AS_XENON) && !defined(AS_X64_GCC) && !defined(AS_X64_MSVC) && !defined(AS_ARM) && !defined(AS_ARM64) && !defined(AS_X64_MINGW))
 	#ifndef AS_MAX_PORTABILITY
 		#define AS_MAX_PORTABILITY
 	#endif
