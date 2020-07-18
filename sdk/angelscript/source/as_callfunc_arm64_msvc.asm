@@ -41,10 +41,10 @@
 
     AREA    |.rdata|, DATA, READONLY
     EXPORT  arm64Func
-;    EXPORT arm64FuncR0
-;    EXPORT arm64FuncR0R1
-;    EXPORT arm64FuncObjLast
-;    EXPORT arm64FuncR0ObjLast
+    EXPORT arm64FuncR0
+    EXPORT arm64FuncR0R1
+    EXPORT arm64FuncObjLast
+    EXPORT arm64FuncR0ObjLast
 
     AREA    |.text|, CODE, ALIGN=3
 
@@ -59,31 +59,30 @@ arm64Func PROC
     cmps    w20, #0 ; set the condition code flags so that we detect if there are no arguments
 
     beq    |nomoreargs|
-
-    ; Load the first 4 arguments into w0-w3
-    cmp     w20, #4
-    ldrge   w0, [x19],#4
-    cmp     w20, #2*4
-    ldrge   w1, [x19],#4
-    cmp     w20, #3*4
-    ldrge   w2, [x19],#4
-    cmp     w20, #4*4
-    ldrge   w3, [x19],#4
-    ble     |nomoreargs|
-;
-;    ; Load the rest of the arguments onto the stack
-;    sub     r7, r7, #4*4    ; skip the 4 registers already loaded into r0-r3
-;    sub     sp, sp, r7
-;    mov     r8, r7
-;|stackargsloop|
-;    ldr     r5, [r6], #4
-;    str     r5, [sp], #4
-;    subs    r7, r7, #4
-;    bne     |stackargsloop|
+; TODO: MIDDLE
 |nomoreargs|
-    blr     x2
+    blr     x21
     ldp     fp,lr,[sp],#0x30
     ret
-    ENDP
+    ENDP ; arm64Func
+
+    ALIGN   8
+arm64FuncR0 PROC
+    ENDP ; arm64FuncR0
+
+        ALIGN 8
+arm64FuncR0R1 PROC
+; TODO: EVERYTHING
+    ENDP ; arm64FuncR0R1
+
+    ALIGN 8
+arm64FuncObjLast PROC
+; TODO: EVERYTHING
+    ENDP ; arm64FuncObjLast
+
+    ALIGN 8
+arm64FuncR0ObjLast PROC
+; TODO: EVERYTHING
+    ENDP ; arm64FuncR0ObjLast
 
     END

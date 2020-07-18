@@ -38,13 +38,6 @@
 //
 
 
-// This code has to conform to both AAPCS and the modified ABI for iOS
-//
-// Reference:
-//
-// AAPCS: http://infocenter.arm.com/help/topic/com.arm.doc.ihi0042d/IHI0042D_aapcs.pdf
-// iOS: http://developer.apple.com/library/ios/documentation/Xcode/Conceptual/iPhoneOSABIReference/iPhoneOSABIReference.pdf
-
 #include "as_config.h"
 
 #ifndef AS_MAX_PORTABILITY
@@ -310,7 +303,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	//----------------------------------------------------------------------------
 
 	//---------------------------------------------------------------------------- RPi
-	// Weï¿½ll divide paramBuffer into several segments:
+	// We´ll divide paramBuffer into several segments:
 	//
 	// 0-1							Unused
 	// 2-5		(+8   / +0   asm)	values that should be placed in R0 - R3
@@ -324,7 +317,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	// Total number of elements: 104
 	//
 	// When passing the paramBuffer to the asm routines via the args pointer we are
-	// offsetting the start of the array to being at element # 2. Thatï¿½s why in asm
+	// offsetting the start of the array to being at element # 2. That´s why in asm
 	// all addresses must have an offset of -2 words (-8 bytes).
 	//---------------------------------------------------------------------------- RPi
 
