@@ -29,8 +29,8 @@
 ;
 
 
-; Assembly routines for the ARM64/AArch64 call convention used for Windows CE
-; Written by Max Waine in July 2020
+; Assembly routines for the ARM64/AArch64 call convention used for Windows 10 on ARM
+; Written by Max Waine in July 2020, based on as_callfunc_arm_msvc.asm
 
 ; MSVC currently doesn't support inline assembly for the ARM64 platform,
 ; and if they're treating it like x64 /won't/ ever support inline assembly,
@@ -50,39 +50,40 @@
 
     ALIGN   8
 arm64Func PROC
-    stmdb   sp!, {r4-r8, lr}
-    mov     r6, r0  ; arg table
-    movs    r7, r1  ; arg size (also set the condition code flags so that we detect if there are no arguments)
-    mov     r4, r2  ; function address
-    mov     r8, #0
+    stp     fp,lr,[sp,#-0x30]!
+    mov     fp,sp
+    str     x19,[sp,#0x18] ; arg table
+    str     w20,[sp,#0x10] ; arg size
+    str     x21,[sp,#0x20] ; function address
+    mov     w22, #0
+    cmps    w20, #0 ; set the condition code flags so that we detect if there are no arguments
 
-    beq     |nomoreargs|
+    beq    |nomoreargs|
 
-    ; Load the first 4 arguments into r0-r3
-    cmp     r7, #4
-    ldrge   r0, [r6],#4
-    cmp     r7, #2*4
-    ldrge   r1, [r6],#4
-    cmp     r7, #3*4
-    ldrge   r2, [r6],#4
-    cmp     r7, #4*4
-    ldrge   r3, [r6],#4
+    ; Load the first 4 arguments into w0-w3
+    cmp     w20, #4
+    ldrge   w0, [x19],#4
+    cmp     w20, #2*4
+    ldrge   w1, [x19],#4
+    cmp     w20, #3*4
+    ldrge   w2, [x19],#4
+    cmp     w20, #4*4
+    ldrge   w3, [x19],#4
     ble     |nomoreargs|
-
-    ; Load the rest of the arguments onto the stack
-    sub     r7, r7, #4*4    ; skip the 4 registers already loaded into r0-r3
-    sub     sp, sp, r7
-    mov     r8, r7
-|stackargsloop|
-    ldr     r5, [r6], #4
-    str     r5, [sp], #4
-    subs    r7, r7, #4
-    bne     |stackargsloop|
+;
+;    ; Load the rest of the arguments onto the stack
+;    sub     r7, r7, #4*4    ; skip the 4 registers already loaded into r0-r3
+;    sub     sp, sp, r7
+;    mov     r8, r7
+;|stackargsloop|
+;    ldr     r5, [r6], #4
+;    str     r5, [sp], #4
+;    subs    r7, r7, #4
+;    bne     |stackargsloop|
 |nomoreargs|
-    sub     sp, sp, r8
-    blx     r4
-    add     sp, sp, r8
-    ldmia   sp!, {r4-r8, pc}
+    blr     x2
+    ldp     fp,lr,[sp],#0x30
+    ret
     ENDP
 
     END
