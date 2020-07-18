@@ -41,10 +41,10 @@
 
     AREA    |.rdata|, DATA, READONLY
     EXPORT  arm64Func
-    EXPORT arm64FuncR0
-    EXPORT arm64FuncR0R1
-    EXPORT arm64FuncObjLast
-    EXPORT arm64FuncR0ObjLast
+;    EXPORT arm64FuncR0
+;    EXPORT arm64FuncR0R1
+;    EXPORT arm64FuncObjLast
+;    EXPORT arm64FuncR0ObjLast
 
     AREA    |.text|, CODE, ALIGN=3
 
@@ -65,24 +65,5 @@ arm64Func PROC
     ldp     fp,lr,[sp],#0x30
     ret
     ENDP ; arm64Func
-
-    ALIGN   8
-arm64FuncR0 PROC
-    ENDP ; arm64FuncR0
-
-        ALIGN 8
-arm64FuncR0R1 PROC
-; TODO: EVERYTHING
-    ENDP ; arm64FuncR0R1
-
-    ALIGN 8
-arm64FuncObjLast PROC
-; TODO: EVERYTHING
-    ENDP ; arm64FuncObjLast
-
-    ALIGN 8
-arm64FuncR0ObjLast PROC
-; TODO: EVERYTHING
-    ENDP ; arm64FuncR0ObjLast
 
     END
