@@ -60,16 +60,15 @@ arm64Func PROC
     ; If 0 args jump to end.  If >=8 we can skip dynamic jump
     cbz     w20, |noMoreArgs|
     cmp     w20, #8*8
-
-    bge     |populateStackRegistersStart|
+    bge     |populateRegisterArgsStart|
 
     ; Calculate amount to jump forward, avoiding pointless instructions
-    adr     x9, |populateStackRegistersEnd|
+    adr     x9, |populateRegisterArgsEnd|
     sub     x9, x9, x20
     br      x9
 
     ; Load args
-|populateStackRegistersStart|
+|populateRegisterArgsStart|
     ldr     x7, [x19],#8
     ldr     x6, [x19],#8
     ldr     x5, [x19],#8
@@ -78,7 +77,7 @@ arm64Func PROC
     ldr     x2, [x19],#8
     ldr     x1, [x19],#8
     ldr     x0, [x19],#8
-|populateStackRegistersEnd|
+|populateRegisterArgsEnd|
 
     ; Jump to end if 8 or fewer args
     subs    x20, x20, #8*8
@@ -93,10 +92,13 @@ arm64Func PROC
     str     x9, [sp],#8
     subs    w20, w20,#8
     bne     |stackArgsLoop|
+
+    ; Call the actual function
 |noMoreArgs|
     sub     sp, sp, x22
     blr     x21
     add     sp, sp, x22
+
     ; Restore non-volatile registers and fp/lr
     ldp     x19, x20, [fp,#0x10]
     ldp     x21, x22, [fp,#0x20]
