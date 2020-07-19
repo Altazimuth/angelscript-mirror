@@ -79,17 +79,19 @@ arm64Func PROC
 |populateRegisterArgsEnd|
 
     ; Jump to end if 8 or fewer args
-    subs    x14, x14, #8*8
+    subs    x14, x14, #8*8 ; TODO: Correctness check, should be 8*8 and not 16 because multiplication is later
     ble     |noMoreArgs|
 
     ; Load the rest of the arguments onto the stack. The earlier
     ; reduction of x14 by 8*8 skips registers already loaded into x0-x7
+    lsl     x14, x14, #1 ; multiply by 2 (<<= 1)
     sub     sp, sp, x14
     mov     x22, x14
+    ; Bear in mind variables must be aligned at 16 bytes
 |stackArgsLoop|
     ldr     x9,  [x13],#8
-    str     x9,  [sp],#8
-    subs    x14, x14,#8
+    str     x9,  [sp],#16
+    subs    x14, x14,#16
     bne     |stackArgsLoop|
 
     ; Call the actual function
