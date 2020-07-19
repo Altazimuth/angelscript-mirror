@@ -46,22 +46,21 @@
 
     ALIGN   8
 arm64Func PROC
-    stp     fp,  lr, [sp,#-0x30]!
+    stp     fp,  lr, [sp,#-0x30]! ; Store fp/lr
     mov     fp,  sp
-
-    ; Store non-volatile registers (TODO: VERIFY THIS WORKS)
-    str     x19, [fp,#0x18]
-    str     w20, [fp,#0x10]
-    str     x21, [fp,#0x20]
+    ; Store non-volatile registers
+    stp     x19, x20, [fp,#0x10]
+    stp     x21, x22, [fp,#0x20]
 
     mov     x19, x0 ; arg table
     mov     w20, w1 ; arg size (in bytes)
-    mov     x21, w2 ; function address
-    mov     x22, #0 ; TODO: Is this a valid next general-purpose register number?
+    mov     x21, x2 ; function address
+    mov     x22, #0 ; Called function's stack pointer offset
 
     ; If 0 args jump to end.  If >=8 we can skip dynamic jump
     cbz     w20, |noMoreArgs|
     cmp     w20, #8*8
+
     bge     |populateStackRegistersStart|
 
     ; Calculate amount to jump forward, avoiding pointless instructions
@@ -80,26 +79,28 @@ arm64Func PROC
     ldr     x1, [x19],#8
     ldr     x0, [x19],#8
 |populateStackRegistersEnd|
-; simpler way to do things that is probably less efficient
-;    cmp     w20, #8*1
-;    blt     |noMoreArgs|
-;    ldr     x0, [x19],#8
-; do the last 3 instructions 8 times going through the registers and increasing the 8's multiplier in the cmp by 1 each time
 
     ; Jump to end if 8 or fewer args
-    subs    x9, x20, #8*8
+    subs    x20, x20, #8*8
     ble     |noMoreArgs|
 
-; TODO: MIDDLE
-
+    ; Load the rest of the arguments onto the stack. The earlier
+    ; reduction of x20 by 8*8 skips registers already loaded into x0-x7
+    sub     sp, sp, x20
+    mov     x22, x20
+|stackArgsLoop|
+    ldr     x9, [x19],#8
+    str     x9, [sp],#8
+    subs    w20, w20,#8
+    bne     |stackArgsLoop|
 |noMoreArgs|
+    sub     sp, sp, x22
     blr     x21
+    add     sp, sp, x22
+    ; Restore non-volatile registers and fp/lr
+    ldp     x19, x20, [fp,#0x10]
+    ldp     x21, x22, [fp,#0x20]
     ldp     fp,lr,[sp],#0x30
-
-    ; Restore non-volatile registers (TODO: VERIFY THIS WORKS)
-    ldr     x19, [fp,#0x18]
-    ldr     w20, [fp,#0x10]
-    ldr     x21, [fp,#0x20]
 
     ret
     ENDP ; arm64Func
