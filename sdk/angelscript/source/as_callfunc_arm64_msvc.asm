@@ -48,18 +48,29 @@
 arm64Func PROC
     stp     fp,  lr, [sp,#-0x30]!
     mov     fp,  sp
-    str     x19, [sp,#0x18] ; arg table
-    str     w20, [sp,#0x10] ; arg size (in bytes)
-    str     x21, [sp,#0x20] ; function address
-    mov     w22, #0
 
-    cbz     w20, |nomoreargs|
+    ; Store non-volatile registers (TODO: VERIFY THIS WORKS)
+    str     x19, [fp,#0x18]
+    str     w20, [fp,#0x10]
+    str     x21, [fp,#0x20]
+
+    mov     x19, x0 ; arg table
+    mov     w20, w1 ; arg size (in bytes)
+    mov     x21, w2 ; function address
+    mov     x22, #0 ; TODO: Is this a valid next general-purpose register number?
+
+    ; If 0 args jump to end.  If >=8 we can skip dynamic jump
+    cbz     w20, |noMoreArgs|
+    cmp     w20, #8*8
+    bge     |populateStackRegistersStart|
 
     ; Calculate amount to jump forward, avoiding pointless instructions
-    adr     x9, |populatedstackregisters|
-    sub     x9, x9, w20
+    adr     x9, |populateStackRegistersEnd|
+    sub     x9, x9, x20
     br      x9
+
     ; Load args
+|populateStackRegistersStart|
     ldr     x7, [x19],#8
     ldr     x6, [x19],#8
     ldr     x5, [x19],#8
@@ -68,19 +79,28 @@ arm64Func PROC
     ldr     x2, [x19],#8
     ldr     x1, [x19],#8
     ldr     x0, [x19],#8
-|populatedstackregisters|
-
+|populateStackRegistersEnd|
 ; simpler way to do things that is probably less efficient
 ;    cmp     w20, #8*1
-;    blt     |nomoreargs|
+;    blt     |noMoreArgs|
 ;    ldr     x0, [x19],#8
 ; do the last 3 instructions 8 times going through the registers and increasing the 8's multiplier in the cmp by 1 each time
 
+    ; Jump to end if 8 or fewer args
+    subs    x9, x20, #8*8
+    ble     |noMoreArgs|
+
 ; TODO: MIDDLE
 
-|nomoreargs|
+|noMoreArgs|
     blr     x21
     ldp     fp,lr,[sp],#0x30
+
+    ; Restore non-volatile registers (TODO: VERIFY THIS WORKS)
+    ldr     x19, [fp,#0x18]
+    ldr     w20, [fp,#0x10]
+    ldr     x21, [fp,#0x20]
+
     ret
     ENDP ; arm64Func
 
