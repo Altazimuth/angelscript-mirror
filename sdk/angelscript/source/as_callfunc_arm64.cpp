@@ -76,12 +76,10 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 
 	asQWORD       retQW     = 0;
 	asFUNCTION_t  func      = sysFunc->func;
-	int           paramSize = sysFunc->paramSize;
-	asFUNCTION_t *vftable;
-
+	int           paramSize = 0; // In QWORDs
 	asQWORD *argsQW = (asQWORD*)args;
 
-	retQW = arm64Func(argsQW, paramSize << 2, func);
+	retQW = arm64Func(argsQW, paramSize * 8, func);
 
 	return retQW;
 }

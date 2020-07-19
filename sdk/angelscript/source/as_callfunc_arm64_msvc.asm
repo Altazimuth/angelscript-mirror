@@ -41,25 +41,43 @@
 
     AREA    |.rdata|, DATA, READONLY
     EXPORT  arm64Func
-;    EXPORT arm64FuncR0
-;    EXPORT arm64FuncR0R1
-;    EXPORT arm64FuncObjLast
-;    EXPORT arm64FuncR0ObjLast
 
     AREA    |.text|, CODE, ALIGN=3
 
     ALIGN   8
 arm64Func PROC
-    stp     fp,lr,[sp,#-0x30]!
-    mov     fp,sp
-    str     x19,[sp,#0x18] ; arg table
-    str     w20,[sp,#0x10] ; arg size
-    str     x21,[sp,#0x20] ; function address
+    stp     fp,  lr, [sp,#-0x30]!
+    mov     fp,  sp
+    str     x19, [sp,#0x18] ; arg table
+    str     w20, [sp,#0x10] ; arg size (in bytes)
+    str     x21, [sp,#0x20] ; function address
     mov     w22, #0
-    cmps    w20, #0 ; set the condition code flags so that we detect if there are no arguments
 
-    beq    |nomoreargs|
+    cbz     w20, |nomoreargs|
+
+    ; Calculate amount to jump forward, avoiding pointless instructions
+    adr     x9, |populatedstackregisters|
+    sub     x9, x9, w20
+    br      x9
+    ; Load args
+    ldr     x7, [x19],#8
+    ldr     x6, [x19],#8
+    ldr     x5, [x19],#8
+    ldr     x4, [x19],#8
+    ldr     x3, [x19],#8
+    ldr     x2, [x19],#8
+    ldr     x1, [x19],#8
+    ldr     x0, [x19],#8
+|populatedstackregisters|
+
+; simpler way to do things that is probably less efficient
+;    cmp     w20, #8*1
+;    blt     |nomoreargs|
+;    ldr     x0, [x19],#8
+; do the last 3 instructions 8 times going through the registers and increasing the 8's multiplier in the cmp by 1 each time
+
 ; TODO: MIDDLE
+
 |nomoreargs|
     blr     x21
     ldp     fp,lr,[sp],#0x30
