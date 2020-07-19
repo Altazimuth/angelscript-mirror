@@ -66,7 +66,7 @@ BEGIN_AS_NAMESPACE
 // x29:    Frame pointer register
 // x30:    Link register (where to return to)
 
-extern "C" asQWORD arm64Func(const asQWORD *args, int paramSize, asFUNCTION_t func);
+extern "C" asQWORD arm64Func(const asQWORD *args, asQWORD paramSize, asFUNCTION_t func);
 
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &/*retQW2*/, void *secondObject)
 {
@@ -76,7 +76,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 
 	asQWORD       retQW     = 0;
 	asFUNCTION_t  func      = sysFunc->func;
-	int           paramSize = 0; // In QWORDs
+	asQWORD       paramSize = 0; // In QWORDs
 	asQWORD *argsQW = (asQWORD*)args;
 
 	retQW = arm64Func(argsQW, paramSize * 8, func);

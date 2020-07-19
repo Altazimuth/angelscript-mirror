@@ -48,18 +48,17 @@
 arm64Func PROC
     stp     fp,  lr, [sp,#-0x30]! ; Store fp/lr
     mov     fp,  sp
-    ; Store non-volatile registers
-    stp     x19, x20, [fp,#0x10]
-    stp     x21, x22, [fp,#0x20]
+    ; Store non-volatile register
+    str     x22, [fp,#0x10]
 
-    mov     x19, x0 ; arg table
-    mov     w20, w1 ; arg size (in bytes)
-    mov     x21, x2 ; function address
+    mov     x13, x0 ; arg table
+    mov     x14, x1 ; arg size (in bytes)
+    mov     x15, x2 ; function address
     mov     x22, #0 ; Called function's stack pointer offset
 
     ; If 0 args jump to end.  If >=8 we can skip dynamic jump
-    cbz     w20, |noMoreArgs|
-    cmp     w20, #8*8
+    cbz     x14, |noMoreArgs|
+    cmp     x14, #8*8
     bge     |populateRegisterArgsStart|
 
     ; Calculate amount to jump forward, avoiding pointless instructions
@@ -69,39 +68,38 @@ arm64Func PROC
 
     ; Load args
 |populateRegisterArgsStart|
-    ldr     x7, [x19],#8
-    ldr     x6, [x19],#8
-    ldr     x5, [x19],#8
-    ldr     x4, [x19],#8
-    ldr     x3, [x19],#8
-    ldr     x2, [x19],#8
-    ldr     x1, [x19],#8
-    ldr     x0, [x19],#8
+    ldr     x7, [x13],#8
+    ldr     x6, [x13],#8
+    ldr     x5, [x13],#8
+    ldr     x4, [x13],#8
+    ldr     x3, [x13],#8
+    ldr     x2, [x13],#8
+    ldr     x1, [x13],#8
+    ldr     x0, [x13],#8
 |populateRegisterArgsEnd|
 
     ; Jump to end if 8 or fewer args
-    subs    x20, x20, #8*8
+    subs    x14, x14, #8*8
     ble     |noMoreArgs|
 
     ; Load the rest of the arguments onto the stack. The earlier
-    ; reduction of x20 by 8*8 skips registers already loaded into x0-x7
-    sub     sp, sp, x20
-    mov     x22, x20
+    ; reduction of x14 by 8*8 skips registers already loaded into x0-x7
+    sub     sp, sp, x14
+    mov     x22, x14
 |stackArgsLoop|
-    ldr     x9, [x19],#8
-    str     x9, [sp],#8
-    subs    w20, w20,#8
+    ldr     x9,  [x13],#8
+    str     x9,  [sp],#8
+    subs    x14, x14,#8
     bne     |stackArgsLoop|
 
     ; Call the actual function
 |noMoreArgs|
     sub     sp, sp, x22
-    blr     x21
+    blr     x15
     add     sp, sp, x22
 
-    ; Restore non-volatile registers and fp/lr
-    ldp     x19, x20, [fp,#0x10]
-    ldp     x21, x22, [fp,#0x20]
+    ; Restore non-volatile register and fp/lr
+    ldr     x22, [fp,#0x10]
     ldp     fp,lr,[sp],#0x30
 
     ret
