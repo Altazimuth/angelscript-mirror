@@ -46,10 +46,7 @@
 
     ALIGN   8
 arm64Func PROC
-    stp     fp,  lr, [sp,#-0x30]! ; Store fp/lr
-    mov     fp,  sp
-    ; Store non-volatile register
-    str     x22, [fp,#0x10]
+    stp     x22, lr, [sp,#-0x30]! ; Store non-volatile register and lr
 
     mov     x13, x0 ; arg table
     mov     x14, x1 ; arg size (in bytes)
@@ -100,9 +97,7 @@ arm64Func PROC
     blr     x15
     add     sp, sp, x22
 
-    ; Restore non-volatile register and fp/lr
-    ldr     x22, [fp,#0x10]
-    ldp     fp,lr,[sp],#0x30
+    ldp     x22, lr, [sp],#0x30 ; Restore non-volatile register and lr
 
     ret
     ENDP ; arm64Func
