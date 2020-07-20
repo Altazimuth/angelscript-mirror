@@ -61,7 +61,7 @@ arm64Func PROC
 
     ; Calculate amount to jump forward, avoiding pointless instructions
     adr     x9, |arm64Func@populateRegisterArgsEnd|
-    sub     x9, x9, x14
+    sub     x9, x9, x14,lsl 1
     br      x9
 
     ; Load args
@@ -115,50 +115,53 @@ CallARM64 PROC
     stp     fp, lr, [sp,#-0x20]!
     str     x20, [sp,#0x10]
 
+    mov     x20, #0;
+
     cbz     x5, |stackArgsLoopEnd|
 
-    ; Load stack args
-    lsl     x10, x5, 4 ; x10 = numStackArgs * 16
-    sub     sp, sp, x10
-    mov     x20, x10
+    ; Align count to 2, then multiply by 8, resulting in a size aligned to 16
+    add x20, x5,  #1
+    lsl x20, x20, #3
+    and x20, x20, #-0x10
+    ; Multiply count by 8
+    lsl x10, x5, #3
+    sub sp, sp, x20
 |stackArgsLoopStart|
-    ldr     x9, [x4],#8
-    str     x9, [sp],#16
+    ldp     x9,x11, [x4],#16
+    stp     x9,x11, [sp],#16
     subs    x10, x10, #16
-    bne     |stackArgsLoopStart|
+    bgt     |stackArgsLoopStart|
 |stackArgsLoopEnd|
 
     ; Calculate amount to jump forward, avoiding pointless instructions
     adr     x9, |populateFloatRegisterArgsEnd|
-    lsl     x10, x3, 3 ; x10 = numFloatRegArgs * 8
-    sub     x9, x9, x10
+    sub     x9, x9, x3, lsl 2 ; x9 -= numFloatRegArgs * 4
     br      x9
 
-    ldr     d7, [x2],#8
-    ldr     d6, [x2],#8
-    ldr     d5, [x2],#8
-    ldr     d4, [x2],#8
-    ldr     d3, [x2],#8
-    ldr     d2, [x2],#8
-    ldr     d1, [x2],#8
+    ldr     d7, [x2, #0x38]
+    ldr     d6, [x2, #0x30]
+    ldr     d5, [x2, #0x28]
+    ldr     d4, [x2, #0x20]
+    ldr     d3, [x2, #0x18]
+    ldr     d2, [x2, #0x10]
+    ldr     d1, [x2, #0x08]
     ldr     d0, [x2]
 |populateFloatRegisterArgsEnd|
 
     mov     x15, x6
     ; Calculate amount to jump forward, avoiding pointless instructions
     adr     x9, |populateGPRegisterArgsEnd|
-    lsl     x10, x1, 3 ; x10 = numGPRegArgs * 8
-    sub     x9, x9, x10
+    sub     x9, x9, x1, lsl 2 ; x9 -= numGPRegArgs * 4
     br      x9
 
-    ldr     x7, [x0],#8
-    ldr     x6, [x0],#8
-    ldr     x5, [x0],#8
-    ldr     x4, [x0],#8
-    ldr     x3, [x0],#8
-    ldr     x2, [x0],#8
-    ldr     x1, [x0],#8
-    ldr     x0, [x0] ; Do NOT post-index the last register load
+    ldr     x7, [x0, #0x38]
+    ldr     x6, [x0, #0x30]
+    ldr     x5, [x0, #0x28]
+    ldr     x4, [x0, #0x20]
+    ldr     x3, [x0, #0x18]
+    ldr     x2, [x0, #0x10]
+    ldr     x1, [x0, #0x08]
+    ldr     x0, [x0]
 |populateGPRegisterArgsEnd|
 
     ; Actually call function
