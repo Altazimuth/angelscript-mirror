@@ -60,7 +60,7 @@ arm64Func PROC
 
     ; Calculate amount to jump forward, avoiding pointless instructions
     adr     x9, |populateRegisterArgsEnd|
-    sub     x9, x9, x20
+    sub     x9, x9, x14
     br      x9
 
     ; Load args
