@@ -51,9 +51,8 @@
 
 // ARM64 targets use has no software floating-point ABI, it's all hardware (or totally disabled)
 
-#define VFP_OFFSET 70
-#define STACK_OFFSET 6
-#define PARAM_BUFFER_SIZE 104
+#define GP_ARG_REGISTERS    8 // x0-x7
+#define FLOAT_ARG_REGISTERS 8 // v0-v7
 
 BEGIN_AS_NAMESPACE
 
@@ -67,9 +66,16 @@ BEGIN_AS_NAMESPACE
 // x30:    Link register (where to return to)
 
 extern "C" asQWORD arm64Func(const asQWORD *args, asQWORD paramSize, asFUNCTION_t func);
+extern "C" asQWORD CallARM64(
+	const asQWORD *gpRegArgs,    asQWORD numGPRegArgs,
+	const asQWORD *floatRegArgs, asQWORD numFloatRegArgs,
+	const asQWORD *stackArgs,    asQWORD numStackArgs,
+	asFUNCTION_t func
+);
 
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &/*retQW2*/, void *secondObject)
 {
+#if 1
 	asCScriptEngine *engine = context->m_engine;
 	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
 	int callConv = sysFunc->callConv;
@@ -82,6 +88,30 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	retQW = arm64Func(argsQW, paramSize * 8, func);
 
 	return retQW;
+#else
+	asCScriptEngine *engine = context->m_engine;
+	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
+	int callConv = sysFunc->callConv;
+
+	asQWORD       retQW     = 0;
+	asFUNCTION_t  func      = sysFunc->func;
+	asQWORD       paramSize = 0; // In QWORDs
+
+	asQWORD       gpRegArgs[GP_ARG_REGISTERS];
+	asQWORD       floatRegArgs[FLOAT_ARG_REGISTERS];
+	asQWORD       stackArgs[64]; // It's how many x64 users can have
+	asQWORD       numGPRegArgs    = 0;
+	asQWORD       numFloatRegArgs = 0;
+	asQWORD       numStackArgs    = 0;
+
+	for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
+	{
+	}
+
+	retQW = CallARM64(gpRegArgs, numGPRegArgs, floatRegArgs, numFloatRegArgs, stackArgs, numStackArgs, func);
+
+	return retQW;
+#endif
 }
 
 END_AS_NAMESPACE
