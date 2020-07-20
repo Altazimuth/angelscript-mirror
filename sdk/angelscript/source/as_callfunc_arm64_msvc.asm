@@ -41,6 +41,7 @@
 
     AREA    |.rdata|, DATA, READONLY
     EXPORT  arm64Func
+    EXPORT  CallARM64
 
     AREA    |.text|, CODE, ALIGN=3
 
@@ -54,17 +55,17 @@ arm64Func PROC
     mov     x22, #0 ; Called function's stack pointer offset
 
     ; If 0 args jump to end.  If >=8 we can skip dynamic jump
-    cbz     x14, |noMoreArgs|
+    cbz     x14, |arm64Func@noMoreArgs|
     cmp     x14, #8*8
-    bge     |populateRegisterArgsStart|
+    bge     |arm64Func@populateRegisterArgsStart|
 
     ; Calculate amount to jump forward, avoiding pointless instructions
-    adr     x9, |populateRegisterArgsEnd|
+    adr     x9, |arm64Func@populateRegisterArgsEnd|
     sub     x9, x9, x14
     br      x9
 
     ; Load args
-|populateRegisterArgsStart|
+|arm64Func@populateRegisterArgsStart|
     ldr     x7, [x13],#8
     ldr     x6, [x13],#8
     ldr     x5, [x13],#8
@@ -73,11 +74,11 @@ arm64Func PROC
     ldr     x2, [x13],#8
     ldr     x1, [x13],#8
     ldr     x0, [x13],#8
-|populateRegisterArgsEnd|
+|arm64Func@populateRegisterArgsEnd|
 
     ; Jump to end if 8 or fewer args
     subs    x14, x14, #8*8 ; TODO: Correctness check, should be 8*8 and not 16 because multiplication is later
-    ble     |noMoreArgs|
+    ble     |arm64Func@noMoreArgs|
 
     ; Load the rest of the arguments onto the stack. The earlier
     ; reduction of x14 by 8*8 skips registers already loaded into x0-x7
@@ -85,14 +86,14 @@ arm64Func PROC
     sub     sp, sp, x14
     mov     x22, x14
     ; Bear in mind variables must be aligned at 16 bytes
-|stackArgsLoop|
+|arm64Func@stackArgsLoop|
     ldr     x9,  [x13],#8
     str     x9,  [sp],#16
     subs    x14, x14,#16
-    bne     |stackArgsLoop|
+    bne     |arm64Func@stackArgsLoop|
 
     ; Call the actual function
-|noMoreArgs|
+|arm64Func@noMoreArgs|
     sub     sp, sp, x22
     blr     x15
     add     sp, sp, x22
