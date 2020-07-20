@@ -112,14 +112,15 @@ arm64Func PROC
 ;)
     ALIGN   8
 CallARM64 PROC
-    stp     x22, lr, [sp,#-0x70]! ; Store non-volatile register and lr
+    stp     fp, lr, [sp,#-0x20]!
+    str     x20, [sp,#0x10]
 
     cbz     x5, |stackArgsLoopEnd|
 
     ; Load stack args
     lsl     x10, x5, 4 ; x10 = numStackArgs * 16
     sub     sp, sp, x10
-    mov     x22, x10
+    mov     x20, x10
 |stackArgsLoopStart|
     ldr     x9, [x4],#8
     str     x9, [sp],#16
@@ -161,11 +162,12 @@ CallARM64 PROC
 |populateGPRegisterArgsEnd|
 
     ; Actually call function
-    sub     sp, sp, x22
+    sub     sp, sp, x20
     blr     x15
-    add     sp, sp, x22
+    add     sp, sp, x20
 
-    ldp     x22, lr, [sp],#0x70 ; Restore non-volatile register and lr
+    ldr     x20, [sp,#0x10]
+    ldp     fp, lr, [sp],#0x20
 
     ret
     ENDP ; CallARM64
