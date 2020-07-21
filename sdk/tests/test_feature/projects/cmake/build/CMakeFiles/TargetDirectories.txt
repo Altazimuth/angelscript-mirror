@@ -1,0 +1,3 @@
+/home/max/Documents/angelscript-mirror/sdk/tests/test_feature/projects/cmake/build/CMakeFiles/edit_cache.dir
+/home/max/Documents/angelscript-mirror/sdk/tests/test_feature/projects/cmake/build/CMakeFiles/rebuild_cache.dir
+/home/max/Documents/angelscript-mirror/sdk/tests/test_feature/projects/cmake/build/CMakeFiles/test_feature.dir
