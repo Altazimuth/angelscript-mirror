@@ -25,6 +25,7 @@ tags
 # Alt's Additions
 .vs/
 ARM64/
+build/
 
 # These are the default patterns globally ignored by Subversion:
 *~
