@@ -873,7 +873,7 @@
 		#elif defined(__ARMEL__) || defined(__arm__) || defined(__aarch64__) || defined(__AARCH64EL__)
 			// arm 
 
-			// The assembler code currently doesn't support arm v4, nor 64bit (v8)
+			// The assembler code currently doesn't support arm v4
 			#if !defined(__ARM_ARCH_4__) && !defined(__ARM_ARCH_4T__) && !defined(__LP64__)
 				#define AS_ARM
 
@@ -910,6 +910,10 @@
 
 				// Tested with both hard float and soft float abi
 				#undef AS_NO_THISCALL_FUNCTOR_METHOD
+			#elif defined(__LP64__) || defined(__aarch64__)
+				#define AS_ARM64
+
+				// TODO: MORE HERE
 			#endif
 
 		#elif defined(__mips__)
