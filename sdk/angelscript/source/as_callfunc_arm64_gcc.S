@@ -1,0 +1,169 @@
+//
+//  AngelCode Scripting Library
+//  Copyright (c) 2003-2020 Andreas Jonsson
+//
+//  This software is provided 'as-is', without any express or implied
+//  warranty. In no event will the authors be held liable for any
+//  damages arising from the use of this software.
+//
+//  Permission is granted to anyone to use this software for any
+//  purpose, including commercial applications, and to alter it and
+//  redistribute it freely, subject to the following restrictions:
+//
+//  1. The origin of this software must not be misrepresented// you
+//     must not claim that you wrote the original software. If you use
+//     this software in a product, an acknowledgment in the product
+//     documentation would be appreciated but is not required.
+//
+//  2. Altered source versions must be plainly marked as such, and
+//     must not be misrepresented as being the original software.
+//
+//  3. This notice may not be removed or altered from any source
+//     distribution.
+//
+//  The original version of this library can be located at:
+//  http://www.angelcode.com/angelscript/
+//
+//  Andreas Jonsson
+//  andreas@angelcode.com
+//
+
+
+// Assembly routines for the ARM64/AArch64 call convention used for Windows 10 on ARM
+// Written by Max Waine in July 2020, based on as_callfunc_arm_msvc.asm
+
+// MSVC currently doesn't support inline assembly for the ARM64 platform,
+// and if they're treating it like x64 /won't/ ever support inline assembly,
+// so this separate file is needed.
+
+// Compile with Microsoft ARM64 assembler (armasm64)
+// http://msdn.microsoft.com/en-us/library/hh873190.aspx
+
+.global arm64Func
+.global CallARM64
+
+arm64Func:
+    stp     x22, lr, [sp,#-0x30]! // Store non-volatile register and lr
+
+    mov     x13, x0 // arg table
+    mov     x14, x1 // arg size (in bytes)
+    mov     x15, x2 // function address
+    mov     x22, #0 // Called function's stack pointer offset
+
+    // If 0 args jump to end.  If >=8 we can skip dynamic jump
+    cbz     x14, arm64Func_noMoreArgs
+    cmp     x14, #8*8
+    bge     arm64Func_populateRegisterArgsStart
+
+    // Calculate amount to jump forward, avoiding pointless instructions
+    adr     x9, arm64Func_populateRegisterArgsEnd
+    sub     x9, x9, x14,lsl 1
+    br      x9
+
+    // Load args
+arm64Func_populateRegisterArgsStart:
+    ldr     x7, [x13],#8
+    ldr     x6, [x13],#8
+    ldr     x5, [x13],#8
+    ldr     x4, [x13],#8
+    ldr     x3, [x13],#8
+    ldr     x2, [x13],#8
+    ldr     x1, [x13],#8
+    ldr     x0, [x13],#8
+arm64Func_populateRegisterArgsEnd:
+
+    // Jump to end if 8 or fewer args
+    subs    x14, x14, #8*8 // TODO: Correctness check, should be 8*8 and not 16 because multiplication is later
+    ble     arm64Func_noMoreArgs
+
+    // Load the rest of the arguments onto the stack. The earlier
+    // reduction of x14 by 8*8 skips registers already loaded into x0-x7
+    lsl     x14, x14, #1 // multiply by 2 (<<= 1)
+    sub     sp, sp, x14
+    mov     x22, x14
+    // Bear in mind variables must be aligned at 16 bytes
+arm64Func_stackArgsLoop:
+    ldr     x9,  [x13],#8
+    str     x9,  [sp],#16
+    subs    x14, x14,#16
+    bne     arm64Func_stackArgsLoop
+
+    // Call the actual function
+arm64Func_noMoreArgs:
+    sub     sp, sp, x22
+    blr     x15
+    add     sp, sp, x22
+
+    ldp     x22, lr, [sp],#0x30 // Restore non-volatile register and lr
+
+    ret
+
+
+//asQWORD CallARM64(
+//    const asQWORD *gpRegArgs,    asQWORD numGPRegArgs,
+//    const asQWORD *floatRegArgs, asQWORD numFloatRegArgs,
+//    const asQWORD *stackArgs,    asQWORD numStackArgs,
+//    asFUNCTION_t func
+//)
+CallARM64:
+    stp     fp, lr, [sp,#-0x20]!
+    str     x20, [sp,#0x10]
+
+    mov     x20, #0//
+
+    cbz     x5, stackArgsLoopEnd
+
+    // Align count to 2, then multiply by 8, resulting in a size aligned to 16
+    add x20, x5,  #1
+    lsl x20, x20, #3
+    and x20, x20, #-0x10
+    // Multiply count by 8
+    lsl x10, x5, #3
+    sub sp, sp, x20
+stackArgsLoopStart:
+    ldp     x9,x11, [x4],#16
+    stp     x9,x11, [sp],#16
+    subs    x10, x10, #16
+    bgt     stackArgsLoopStart
+stackArgsLoopEnd:
+
+    // Calculate amount to jump forward, avoiding pointless instructions
+    adr     x9, populateFloatRegisterArgsEnd
+    sub     x9, x9, x3, lsl 2 // x9 -= numFloatRegArgs * 4
+    br      x9
+
+    ldr     d7, [x2, #0x38]
+    ldr     d6, [x2, #0x30]
+    ldr     d5, [x2, #0x28]
+    ldr     d4, [x2, #0x20]
+    ldr     d3, [x2, #0x18]
+    ldr     d2, [x2, #0x10]
+    ldr     d1, [x2, #0x08]
+    ldr     d0, [x2]
+populateFloatRegisterArgsEnd:
+
+    mov     x15, x6
+    // Calculate amount to jump forward, avoiding pointless instructions
+    adr     x9, populateGPRegisterArgsEnd
+    sub     x9, x9, x1, lsl 2 // x9 -= numGPRegArgs * 4
+    br      x9
+
+    ldr     x7, [x0, #0x38]
+    ldr     x6, [x0, #0x30]
+    ldr     x5, [x0, #0x28]
+    ldr     x4, [x0, #0x20]
+    ldr     x3, [x0, #0x18]
+    ldr     x2, [x0, #0x10]
+    ldr     x1, [x0, #0x08]
+    ldr     x0, [x0]
+populateGPRegisterArgsEnd:
+
+    // Actually call function
+    sub     sp, sp, x20
+    blr     x15
+    add     sp, sp, x20
+
+    ldr     x20, [sp,#0x10]
+    ldp     fp, lr, [sp],#0x20
+
+    ret
