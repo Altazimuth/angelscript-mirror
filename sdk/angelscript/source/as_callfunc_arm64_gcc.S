@@ -40,6 +40,8 @@
 // http://msdn.microsoft.com/en-us/library/hh873190.aspx
 
 .global arm64Func
+.global CallARM64Double
+.global CallARM64Float
 .global CallARM64
 
 arm64Func:
@@ -105,6 +107,8 @@ arm64Func_noMoreArgs:
 //    const asQWORD *stackArgs,    asQWORD numStackArgs,
 //    asFUNCTION_t func
 //)
+CallARM64Double:
+CallARM64Float:
 CallARM64:
     stp     fp, lr, [sp,#-0x20]!
     str     x20, [sp,#0x10]

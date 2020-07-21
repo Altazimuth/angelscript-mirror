@@ -66,6 +66,18 @@ BEGIN_AS_NAMESPACE
 // x30:    Link register (where to return to)
 
 extern "C" asQWORD arm64Func(const asQWORD *args, asQWORD paramSize, asFUNCTION_t func);
+extern "C" double CallARM64Double(
+	const asQWORD *gpRegArgs,    asQWORD numGPRegArgs,
+	const asQWORD *floatRegArgs, asQWORD numFloatRegArgs,
+	const asQWORD *stackArgs,    asQWORD numStackArgs,
+	asFUNCTION_t func
+);
+extern "C" float CallARM64Float(
+	const asQWORD *gpRegArgs,    asQWORD numGPRegArgs,
+	const asQWORD *floatRegArgs, asQWORD numFloatRegArgs,
+	const asQWORD *stackArgs,    asQWORD numStackArgs,
+	asFUNCTION_t func
+);
 extern "C" asQWORD CallARM64(
 	const asQWORD *gpRegArgs,    asQWORD numGPRegArgs,
 	const asQWORD *floatRegArgs, asQWORD numFloatRegArgs,
@@ -75,7 +87,7 @@ extern "C" asQWORD CallARM64(
 
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &/*retQW2*/, void *secondObject)
 {
-#if 1
+#if 0
 	asCScriptEngine *engine = context->m_engine;
 	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
 	int callConv = sysFunc->callConv;
@@ -108,7 +120,15 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	{
 	}
 
-	retQW = CallARM64(gpRegArgs, numGPRegArgs, floatRegArgs, numFloatRegArgs, stackArgs, numStackArgs, func);
+	if( sysFunc->hostReturnFloat )
+	{
+		if( sysFunc->hostReturnSize == 1 )
+			*(float*)&retQW = CallARM64Float(gpRegArgs, numGPRegArgs, floatRegArgs, numFloatRegArgs, stackArgs, numStackArgs, func);
+		else
+			*(double*)&retQW = CallARM64Double(gpRegArgs, numGPRegArgs, floatRegArgs, numFloatRegArgs, stackArgs, numStackArgs, func);
+	}
+	else
+		retQW = CallARM64(gpRegArgs, numGPRegArgs, floatRegArgs, numFloatRegArgs, stackArgs, numStackArgs, func);
 
 	return retQW;
 #endif
