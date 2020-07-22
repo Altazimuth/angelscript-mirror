@@ -41,6 +41,8 @@
 
     AREA    |.rdata|, DATA, READONLY
     EXPORT  arm64Func
+    EXPORT  CallARM64Double
+    EXPORT  CallARM64Float
     EXPORT  CallARM64
 
     AREA    |.text|, CODE, ALIGN=3
@@ -110,6 +112,18 @@ arm64Func PROC
 ;    const asQWORD *stackArgs,    asQWORD numStackArgs,
 ;    asFUNCTION_t func
 ;)
+    ALIGN   8
+CallARM64Double PROC
+    bl CallARM64
+    ret
+    ENDP
+
+    ALIGN   8
+CallARM64Float PROC
+    bl CallARM64
+    ret
+    ENDP
+
     ALIGN   8
 CallARM64 PROC
     stp     fp, lr, [sp,#-0x20]!
