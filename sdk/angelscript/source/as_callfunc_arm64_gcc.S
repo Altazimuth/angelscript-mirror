@@ -39,69 +39,11 @@
 // Compile with Microsoft ARM64 assembler (armasm64)
 // http://msdn.microsoft.com/en-us/library/hh873190.aspx
 
-.global arm64Func
 .global CallARM64Double
 .global CallARM64Float
 .global CallARM64
 
-arm64Func:
-    stp     x22, lr, [sp,#-0x30]! // Store non-volatile register and lr
-
-    mov     x13, x0 // arg table
-    mov     x14, x1 // arg size (in bytes)
-    mov     x15, x2 // function address
-    mov     x22, #0 // Called function's stack pointer offset
-
-    // If 0 args jump to end.  If >=8 we can skip dynamic jump
-    cbz     x14, arm64Func_noMoreArgs
-    cmp     x14, #8*8
-    bge     arm64Func_populateRegisterArgsStart
-
-    // Calculate amount to jump forward, avoiding pointless instructions
-    adr     x9, arm64Func_populateRegisterArgsEnd
-    sub     x9, x9, x14,lsl 1
-    br      x9
-
-    // Load args
-arm64Func_populateRegisterArgsStart:
-    ldr     x7, [x13],#8
-    ldr     x6, [x13],#8
-    ldr     x5, [x13],#8
-    ldr     x4, [x13],#8
-    ldr     x3, [x13],#8
-    ldr     x2, [x13],#8
-    ldr     x1, [x13],#8
-    ldr     x0, [x13],#8
-arm64Func_populateRegisterArgsEnd:
-
-    // Jump to end if 8 or fewer args
-    subs    x14, x14, #8*8 // TODO: Correctness check, should be 8*8 and not 16 because multiplication is later
-    ble     arm64Func_noMoreArgs
-
-    // Load the rest of the arguments onto the stack. The earlier
-    // reduction of x14 by 8*8 skips registers already loaded into x0-x7
-    lsl     x14, x14, #1 // multiply by 2 (<<= 1)
-    sub     sp, sp, x14
-    mov     x22, x14
-    // Bear in mind variables must be aligned at 16 bytes
-arm64Func_stackArgsLoop:
-    ldr     x9,  [x13],#8
-    str     x9,  [sp],#16
-    subs    x14, x14,#16
-    bne     arm64Func_stackArgsLoop
-
-    // Call the actual function
-arm64Func_noMoreArgs:
-    sub     sp, sp, x22
-    blr     x15
-    add     sp, sp, x22
-
-    ldp     x22, lr, [sp],#0x30 // Restore non-volatile register and lr
-
-    ret
-
-
-//asQWORD CallARM64(
+//[returnType] CallARM64[type](
 //    const asQWORD *gpRegArgs,    asQWORD numGPRegArgs,
 //    const asQWORD *floatRegArgs, asQWORD numFloatRegArgs,
 //    const asQWORD *stackArgs,    asQWORD numStackArgs,

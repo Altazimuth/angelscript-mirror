@@ -87,20 +87,6 @@ extern "C" asQWORD CallARM64(
 
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &/*retQW2*/, void *secondObject)
 {
-#if 0
-	asCScriptEngine *engine = context->m_engine;
-	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
-	int callConv = sysFunc->callConv;
-
-	asQWORD       retQW     = 0;
-	asFUNCTION_t  func      = sysFunc->func;
-	asQWORD       paramSize = 0; // In QWORDs
-	asQWORD *argsQW = (asQWORD*)args;
-
-	retQW = arm64Func(argsQW, paramSize * 8, func);
-
-	return retQW;
-#else
 	asCScriptEngine *engine = context->m_engine;
 	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
 	int callConv = sysFunc->callConv;
@@ -131,7 +117,6 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		retQW = CallARM64(gpRegArgs, numGPRegArgs, floatRegArgs, numFloatRegArgs, stackArgs, numStackArgs, func);
 
 	return retQW;
-#endif
 }
 
 END_AS_NAMESPACE
