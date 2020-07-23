@@ -69,6 +69,12 @@ BEGIN_AS_NAMESPACE
 extern "C" void GetHFAReturnDouble(void *out, asQWORD returnSize);
 extern "C" void GetHFAReturnFloat(void *out, asQWORD returnSize);
 
+extern "C" asQWORD CallARM64RetInMemory(
+	const asQWORD *gpRegArgs,    asQWORD numGPRegArgs,
+	const asQWORD *floatRegArgs, asQWORD numFloatRegArgs,
+	const asQWORD *stackArgs,    asQWORD numStackArgs,
+	void *retPointer,            asFUNCTION_t func
+);
 extern "C" double CallARM64Double(
 	const asQWORD *gpRegArgs,    asQWORD numGPRegArgs,
 	const asQWORD *floatRegArgs, asQWORD numFloatRegArgs,
@@ -105,15 +111,101 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	asQWORD       numFloatRegArgs = 0;
 	asQWORD       numStackArgs    = 0;
 
+	// Optimization to avoid check 12 values (all ICC_ that contains THISCALL)
+	if( (callConv >= ICC_THISCALL && callConv <= ICC_VIRTUAL_THISCALL_RETURNINMEM) ||
+		(callConv >= ICC_THISCALL_OBJLAST && callConv <= ICC_VIRTUAL_THISCALL_OBJFIRST_RETURNINMEM) )
+	{
+		// Add the object pointer as the first parameter
+		gpRegArgs[numGPRegArgs++] = (asQWORD)obj;
+	}
+
+	asUINT spos = 0;
 	for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 	{
+		const asCDataType &parmType = descr->parameterTypes[n];
+		const asCTypeInfo *const parmTypeInfo = parmType.GetTypeInfo();
+
+		if( parmType.IsObject() && !parmType.IsObjectHandle() && !parmType.IsReference() )
+		{
+
+		}
+		else if( parmType.IsFloatType() && !parmType.IsReference() )
+		{
+			if( numFloatRegArgs >= FLOAT_ARG_REGISTERS )
+				stackArgs[numStackArgs++] = args[spos];
+			else
+				floatRegArgs[numFloatRegArgs++] = args[spos];
+			spos++;
+		}
+		else if( parmType.IsDoubleType() && !parmType.IsReference() )
+		{
+			if( numFloatRegArgs >= FLOAT_ARG_REGISTERS )
+				stackArgs[numStackArgs++] = *(asQWORD*)&args[spos];
+			else
+				floatRegArgs[numFloatRegArgs++] = *(asQWORD*)&args[spos];
+			spos += 2;
+		}
+		else
+		{
+			// Copy the value directly
+			asUINT parmDWords = parmType.GetSizeOnStackDWords();
+			asUINT parmQWords = (parmDWords >> 1) + (parmDWords & 1);
+
+			//const bool fitsInRegisters = numGPRegArgs + parmQWords <= GP_ARG_REGISTERS;
+			//asQWORD *const argsArray = fitsInRegisters ? gpRegArgs : stackArgs;
+			//asQWORD &numArgs = fitsInRegisters ? numGPRegArgs : numStackArgs;
+
+			//for(asUINT i = 0; i < parmDWords; i++)
+			//{
+			//	if(i & 1)
+			//	{
+			//		numArgs[argsArray++] = *(asQWORD*)&args[spos];
+			//		spos += 2;
+			//	}
+			//	else if(i + 1 == parmDWords)
+			//	{
+			//		numArgs[argsArray++] = args[spos++];
+			//	}
+			//}
+
+			if(numGPRegArgs + parmQWords <= GP_ARG_REGISTERS)
+			{
+				for(asUINT i = 0; i < parmDWords; i++)
+				{
+					if(i & 1)
+					{
+						gpRegArgs[numGPRegArgs++] = *(asQWORD*)&args[spos];
+						spos += 2;
+					}
+					else if(i + 1 == parmDWords)
+					{
+						gpRegArgs[numGPRegArgs++] = args[spos++];
+					}
+				}
+			}
+			else
+			{
+				for(asUINT i = 0; i < parmDWords; i++)
+				{
+					if(i & 1)
+					{
+						stackArgs[numStackArgs++] = *(asQWORD*)&args[spos];
+						spos += 2;
+					}
+					else if(i + 1 == parmDWords)
+					{
+						stackArgs[numStackArgs++] = args[spos++];
+					}
+				}
+			}
+		}
 	}
 
 	if( retTypeInfo && (retTypeInfo->flags & asOBJ_APP_CLASS_ALLFLOATS) )
 	{
 		// This is to deal with HFAs (Homogeneous Floating-point Aggregates):
 		// ARM64 will place all-float composite types (of equal precision)
-		// with <= 8 members in the float return registers
+		// with <= 4 members in the float return registers
 
 		const bool doubles = (retTypeInfo->flags & asOBJ_APP_CLASS_ALIGN8) != 0;
 		const int maxAllowedSize = doubles ? sizeof(double) * HFA_RET_REGISTERS : sizeof(float) * HFA_RET_REGISTERS;
@@ -140,6 +232,8 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		else
 			*(double*)&retQW = CallARM64Double(gpRegArgs, numGPRegArgs, floatRegArgs, numFloatRegArgs, stackArgs, numStackArgs, func);
 	}
+	else if( sysFunc->hostReturnInMemory )
+		retQW = CallARM64RetInMemory(gpRegArgs, numGPRegArgs, floatRegArgs, numFloatRegArgs, stackArgs, numStackArgs, retPointer, func);
 	else
 		retQW = CallARM64(gpRegArgs, numGPRegArgs, floatRegArgs, numFloatRegArgs, stackArgs, numStackArgs, func);
 
