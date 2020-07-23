@@ -51,6 +51,7 @@
 
 // ARM64 targets use has no software floating-point ABI, it's all hardware (or totally disabled)
 
+#define HFA_RET_REGISTERS   4 // s0-s3/d0-d3
 #define GP_ARG_REGISTERS    8 // x0-x7
 #define FLOAT_ARG_REGISTERS 8 // v0-v7
 
@@ -115,7 +116,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		// with <= 8 members in the float return registers
 
 		const bool doubles = (retTypeInfo->flags & asOBJ_APP_CLASS_ALIGN8) != 0;
-		const int maxAllowedSize = doubles ? sizeof(double) * 8 : sizeof(float) * 8;
+		const int maxAllowedSize = doubles ? sizeof(double) * HFA_RET_REGISTERS : sizeof(float) * HFA_RET_REGISTERS;
 		const int structSize = retType.GetSizeInMemoryBytes();
 
 		CallARM64(gpRegArgs, numGPRegArgs, floatRegArgs, numFloatRegArgs, stackArgs, numStackArgs, func);

@@ -52,10 +52,6 @@ GetHFAReturnDouble:
     sub     x9, x9, x1, lsr 1 // x9 -= returnSize >> 1; (/2 because double is 2x instruction size)
     br      x9
 
-    str     d7, [x0, #0x38]
-    str     d6, [x0, #0x30]
-    str     d5, [x0, #0x28]
-    str     d4, [x0, #0x20]
     str     d3, [x0, #0x18]
     str     d2, [x0, #0x10]
     str     d1, [x0, #0x8]
@@ -73,10 +69,6 @@ GetHFAReturnFloat:
     sub     x9, x9, x1 // x9 -= returnSize; (already 4 bytes per return)
     br      x9
 
-    str     s7, [x0, #0x1C]
-    str     s6, [x0, #0x18]
-    str     s5, [x0, #0x14]
-    str     s4, [x0, #0x10]
     str     s3, [x0, #0xC]
     str     s2, [x0, #0x8]
     str     s1, [x0, #0x4]
