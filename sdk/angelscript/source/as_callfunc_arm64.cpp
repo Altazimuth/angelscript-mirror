@@ -151,54 +151,41 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			asUINT parmDWords = parmType.GetSizeOnStackDWords();
 			asUINT parmQWords = (parmDWords >> 1) + (parmDWords & 1);
 
-			//const bool fitsInRegisters = numGPRegArgs + parmQWords <= GP_ARG_REGISTERS;
-			//asQWORD *const argsArray = fitsInRegisters ? gpRegArgs : stackArgs;
-			//asQWORD &numArgs = fitsInRegisters ? numGPRegArgs : numStackArgs;
+			const bool fitsInRegisters = numGPRegArgs + parmQWords <= GP_ARG_REGISTERS;
+			asQWORD *const argsArray = fitsInRegisters ? gpRegArgs : stackArgs;
+			asQWORD &numArgs = fitsInRegisters ? numGPRegArgs : numStackArgs;
 
-			//for(asUINT i = 0; i < parmDWords; i++)
-			//{
-			//	if(i & 1)
-			//	{
-			//		numArgs[argsArray++] = *(asQWORD*)&args[spos];
-			//		spos += 2;
-			//	}
-			//	else if(i + 1 == parmDWords)
-			//	{
-			//		numArgs[argsArray++] = args[spos++];
-			//	}
-			//}
-
-			if(numGPRegArgs + parmQWords <= GP_ARG_REGISTERS)
+			for(asUINT i = 0; i < parmDWords; i++)
 			{
-				for(asUINT i = 0; i < parmDWords; i++)
+				if(i & 1)
 				{
-					if(i & 1)
-					{
-						gpRegArgs[numGPRegArgs++] = *(asQWORD*)&args[spos];
-						spos += 2;
-					}
-					else if(i + 1 == parmDWords)
-					{
-						gpRegArgs[numGPRegArgs++] = args[spos++];
-					}
+					argsArray[numArgs++] = *(asQWORD*)&args[spos];
+					spos += 2;
 				}
-			}
-			else
-			{
-				for(asUINT i = 0; i < parmDWords; i++)
+				else if(i + 1 == parmDWords)
 				{
-					if(i & 1)
-					{
-						stackArgs[numStackArgs++] = *(asQWORD*)&args[spos];
-						spos += 2;
-					}
-					else if(i + 1 == parmDWords)
-					{
-						stackArgs[numStackArgs++] = args[spos++];
-					}
+					argsArray[numArgs++] = args[spos++];
 				}
 			}
 		}
+	}
+
+	if( callConv == ICC_CDECL_OBJLAST || callConv == ICC_CDECL_OBJLAST_RETURNINMEM )
+	{
+		// Add the object pointer as the last parameter
+		if( numGPRegArgs < GP_ARG_REGISTERS )
+			gpRegArgs[numGPRegArgs++] = (asQWORD)obj;
+		else
+			stackArgs[numStackArgs++] = (asQWORD)obj;
+	}
+	else if( callConv == ICC_THISCALL_OBJLAST || callConv == ICC_THISCALL_OBJLAST_RETURNINMEM ||
+		callConv == ICC_VIRTUAL_THISCALL_OBJLAST || callConv == ICC_VIRTUAL_THISCALL_OBJLAST_RETURNINMEM )
+	{
+		// Add the object pointer as the last parameter
+		if( numGPRegArgs < GP_ARG_REGISTERS )
+			gpRegArgs[numGPRegArgs++] = (asQWORD)secondObject;
+		else
+			stackArgs[numStackArgs++] = (asQWORD)secondObject;
 	}
 
 	if( retTypeInfo && (retTypeInfo->flags & asOBJ_APP_CLASS_ALLFLOATS) )
@@ -217,13 +204,9 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 
 		}
 		else if( doubles )
-		{
 			GetHFAReturnDouble(retPointer, structSize);
-		}
 		else
-		{
 			GetHFAReturnFloat(retPointer, structSize);
-		}
 	}
 	else if( sysFunc->hostReturnFloat )
 	{
