@@ -39,9 +39,54 @@
 // Compile with Microsoft ARM64 assembler (armasm64)
 // http://msdn.microsoft.com/en-us/library/hh873190.aspx
 
+.global GetHFAReturnDouble
+.global GetHFAReturnFloat
 .global CallARM64Double
 .global CallARM64Float
 .global CallARM64
+
+GetHFAReturnDouble:
+    stp     fp, lr, [sp,#-0x10]!
+
+    adr     x9, populateDoubles
+    sub     x9, x9, x1, lsr 1 // x9 -= returnSize >> 1; (/2 because double is 2x instruction size)
+    br      x9
+
+    str     d7, [x0, #0x38]
+    str     d6, [x0, #0x30]
+    str     d5, [x0, #0x28]
+    str     d4, [x0, #0x20]
+    str     d3, [x0, #0x18]
+    str     d2, [x0, #0x10]
+    str     d1, [x0, #0x8]
+    str     d0, [x0]
+populateDoubles:
+
+    ldp     fp, lr, [sp],#0x10
+
+    ret
+
+GetHFAReturnFloat:
+    stp     fp, lr, [sp,#-0x10]!
+
+    adr     x9, populateFloats
+    sub     x9, x9, x1 // x9 -= returnSize; (already 4 bytes per return)
+    br      x9
+
+    str     s7, [x0, #0x1C]
+    str     s6, [x0, #0x18]
+    str     s5, [x0, #0x14]
+    str     s4, [x0, #0x10]
+    str     s3, [x0, #0xC]
+    str     s2, [x0, #0x8]
+    str     s1, [x0, #0x4]
+    str     s0, [x0]
+populateFloats:
+
+    ldp     fp, lr, [sp],#0x10
+
+    ret
+
 
 //[returnType] CallARM64[type](
 //    const asQWORD *gpRegArgs,    asQWORD numGPRegArgs,
@@ -55,7 +100,7 @@ CallARM64:
     stp     fp, lr, [sp,#-0x20]!
     str     x20, [sp,#0x10]
 
-    mov     x20, #0//
+    mov     x20, #0
 
     cbz     x5, stackArgsLoopEnd
 

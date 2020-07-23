@@ -913,6 +913,10 @@
 			#elif defined(__LP64__) || defined(__aarch64__)
 				#define AS_ARM64
 
+				#define CDECL_RETURN_SIMPLE_IN_MEMORY
+				#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+				#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+
 				// TODO: MORE HERE
 			#endif
 

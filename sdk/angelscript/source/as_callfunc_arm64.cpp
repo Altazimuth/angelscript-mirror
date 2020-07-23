@@ -65,7 +65,9 @@ BEGIN_AS_NAMESPACE
 // x29:    Frame pointer register
 // x30:    Link register (where to return to)
 
-extern "C" asQWORD arm64Func(const asQWORD *args, asQWORD paramSize, asFUNCTION_t func);
+extern "C" void GetHFAReturnDouble(void *out, asQWORD returnSize);
+extern "C" void GetHFAReturnFloat(void *out, asQWORD returnSize);
+
 extern "C" double CallARM64Double(
 	const asQWORD *gpRegArgs,    asQWORD numGPRegArgs,
 	const asQWORD *floatRegArgs, asQWORD numFloatRegArgs,
@@ -87,13 +89,13 @@ extern "C" asQWORD CallARM64(
 
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &/*retQW2*/, void *secondObject)
 {
-	asCScriptEngine *engine = context->m_engine;
-	asSSystemFunctionInterface *sysFunc = descr->sysFuncIntf;
+	//asCScriptEngine *engine = context->m_engine;
+	const asSSystemFunctionInterface *const sysFunc = descr->sysFuncIntf;
+	const asCDataType &retType = descr->returnType;
+	const asCTypeInfo *const retTypeInfo = retType.GetTypeInfo();
+	asFUNCTION_t func = sysFunc->func;
 	int callConv = sysFunc->callConv;
-
 	asQWORD       retQW     = 0;
-	asFUNCTION_t  func      = sysFunc->func;
-	asQWORD       paramSize = 0; // In QWORDs
 
 	asQWORD       gpRegArgs[GP_ARG_REGISTERS];
 	asQWORD       floatRegArgs[FLOAT_ARG_REGISTERS];
@@ -106,7 +108,31 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	{
 	}
 
-	if( sysFunc->hostReturnFloat )
+	if( retTypeInfo && (retTypeInfo->flags & asOBJ_APP_CLASS_ALLFLOATS) )
+	{
+		// This is to deal with HFAs (Homogeneous Floating-point Aggregates):
+		// ARM64 will place all-float composite types (of equal precision)
+		// with <= 8 members in the float return registers
+
+		const bool doubles = (retTypeInfo->flags & asOBJ_APP_CLASS_ALIGN8) != 0;
+		const int maxAllowedSize = doubles ? sizeof(double) * 8 : sizeof(float) * 8;
+		const int structSize = retType.GetSizeInMemoryBytes();
+
+		CallARM64(gpRegArgs, numGPRegArgs, floatRegArgs, numFloatRegArgs, stackArgs, numStackArgs, func);
+		if( structSize > maxAllowedSize )
+		{
+
+		}
+		else if( doubles )
+		{
+			GetHFAReturnDouble(retPointer, structSize);
+		}
+		else
+		{
+			GetHFAReturnFloat(retPointer, structSize);
+		}
+	}
+	else if( sysFunc->hostReturnFloat )
 	{
 		if( sysFunc->hostReturnSize == 1 )
 			*(float*)&retQW = CallARM64Float(gpRegArgs, numGPRegArgs, floatRegArgs, numFloatRegArgs, stackArgs, numStackArgs, func);
