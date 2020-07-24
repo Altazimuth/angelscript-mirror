@@ -123,6 +123,8 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	asQWORD       numFloatRegArgs = 0;
 	asQWORD       numStackArgs    = 0;
 
+	asFUNCTION_t *vftable;
+
 	// Optimization to avoid check 12 values (all ICC_ that contains THISCALL)
 	if( (callConv >= ICC_THISCALL && callConv <= ICC_VIRTUAL_THISCALL_RETURNINMEM) ||
 		(callConv >= ICC_THISCALL_OBJLAST && callConv <= ICC_VIRTUAL_THISCALL_OBJFIRST_RETURNINMEM) )
@@ -141,6 +143,14 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	{
 		// Add the object pointer as the first parameter
 		gpRegArgs[numGPRegArgs++] = (asQWORD)secondObject;
+	}
+
+	if( callConv == ICC_VIRTUAL_THISCALL || callConv == ICC_VIRTUAL_THISCALL_RETURNINMEM || callConv == ICC_VIRTUAL_THISCALL_OBJFIRST ||
+	callConv == ICC_VIRTUAL_THISCALL_OBJFIRST_RETURNINMEM || callConv == ICC_VIRTUAL_THISCALL_OBJLAST || callConv == ICC_VIRTUAL_THISCALL_OBJLAST_RETURNINMEM )
+	{
+		// Get virtual function table from the object pointer
+		vftable = *(asFUNCTION_t**)obj;
+		func = vftable[FuncPtrToUInt(func)>>2];
 	}
 
 	asUINT spos = 0;

@@ -916,6 +916,8 @@
 				#undef STDCALL
 				#define STDCALL
 
+				#undef GNU_STYLE_VIRTUAL_METHOD
+
 				#define HAS_128_BIT_PRIMITIVES
 
 				#define CDECL_RETURN_SIMPLE_IN_MEMORY
