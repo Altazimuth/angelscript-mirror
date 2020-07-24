@@ -131,6 +131,18 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		gpRegArgs[numGPRegArgs++] = (asQWORD)obj;
 	}
 
+	if( callConv == ICC_CDECL_OBJFIRST || callConv == ICC_CDECL_OBJFIRST_RETURNINMEM )
+	{
+		// Add the object pointer as the first parameter
+		gpRegArgs[numGPRegArgs++] = (asQWORD)obj;
+	}
+	else if( callConv == ICC_THISCALL_OBJFIRST || callConv == ICC_THISCALL_OBJFIRST_RETURNINMEM ||
+		callConv == ICC_VIRTUAL_THISCALL_OBJFIRST || callConv == ICC_VIRTUAL_THISCALL_OBJFIRST_RETURNINMEM )
+	{
+		// Add the object pointer as the first parameter
+		gpRegArgs[numGPRegArgs++] = (asQWORD)secondObject;
+	}
+
 	asUINT spos = 0;
 	for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 	{
