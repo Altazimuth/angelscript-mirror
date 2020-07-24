@@ -162,7 +162,7 @@ CallARM64Ret128:
     mov     x7, #0
     bl      CallARM64
 
-    ldr     x1, [x20]
+    str     x1, [x20]
 
     ldr     x20, [sp,#0x10]
     ldp     fp, lr, [sp],#0x20
