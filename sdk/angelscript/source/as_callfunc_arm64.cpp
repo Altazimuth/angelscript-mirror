@@ -94,6 +94,12 @@ extern "C" asQWORD CallARM64(
 	asFUNCTION_t func
 );
 
+//template<typename T>
+//static inline PushParameter(T parm, asQWORD *const regArgs, asQWORD *const stackArgs, asQWORD &numRegArgs, asQWORD &numStackArgs)
+//{
+//	
+//}
+
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &/*retQW2*/, void *secondObject)
 {
 	//asCScriptEngine *engine = context->m_engine;
@@ -204,9 +210,9 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 
 		}
 		else if( doubles )
-			GetHFAReturnDouble(retPointer, structSize);
+			GetHFAReturnDouble(structSize > sizeof(double) * 2 ? retPointer : &retQW, structSize);
 		else
-			GetHFAReturnFloat(retPointer, structSize);
+			GetHFAReturnFloat(structSize > sizeof(float) * 2 ? retPointer : &retQW, structSize);
 	}
 	else if( sysFunc->hostReturnFloat )
 	{

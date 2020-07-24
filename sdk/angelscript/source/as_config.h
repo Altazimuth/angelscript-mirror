@@ -913,11 +913,24 @@
 			#elif defined(__LP64__) || defined(__aarch64__)
 				#define AS_ARM64
 
+				#undef STDCALL
+				#define STDCALL
+
+				//#define HAS_128_BIT_PRIMITIVES
+
 				#define CDECL_RETURN_SIMPLE_IN_MEMORY
 				#define STDCALL_RETURN_SIMPLE_IN_MEMORY
 				#define THISCALL_RETURN_SIMPLE_IN_MEMORY
 
-				// TODO: MORE HERE
+				#undef THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+				#undef CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+				#undef STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+
+				#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 5
+				#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE    5
+				#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE  5
+
+				// TODO: MORE HERE?
 			#endif
 
 		#elif defined(__mips__)
