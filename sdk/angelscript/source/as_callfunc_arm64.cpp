@@ -100,7 +100,7 @@ extern "C" asQWORD CallARM64(
 //	
 //}
 
-asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &/*retQW2*/, void *secondObject)
+asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2, void *secondObject)
 {
 	//asCScriptEngine *engine = context->m_engine;
 	const asSSystemFunctionInterface *const sysFunc = descr->sysFuncIntf;
@@ -212,7 +212,20 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		else if( doubles )
 			GetHFAReturnDouble(structSize > sizeof(double) * 2 ? retPointer : &retQW, structSize);
 		else
-			GetHFAReturnFloat(structSize > sizeof(float) * 2 ? retPointer : &retQW, structSize);
+		{
+			if(structSize <= sizeof(float) * 2)
+				GetHFAReturnFloat(&retQW, structSize);
+			else
+			{
+				asQWORD tempBuffer[2];
+				GetHFAReturnFloat(tempBuffer, structSize);
+				retQW = *tempBuffer;
+				if(structSize == sizeof(float) * 4)
+					retQW2 = *(asQWORD*)&tempBuffer[1];
+				else
+					retQW2 = *(asDWORD*)&tempBuffer[1];
+			}
+		}
 	}
 	else if( sysFunc->hostReturnFloat )
 	{
