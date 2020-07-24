@@ -49,6 +49,7 @@
 
 GetHFAReturnDouble:
     stp     fp, lr, [sp,#-0x10]!
+    mov     fp, sp
 
     adr     x9, populateDoubles
     sub     x9, x9, x1, lsr 1 // x9 -= returnSize >> 1; (/2 because double is 2x instruction size)
@@ -66,6 +67,7 @@ populateDoubles:
 
 GetHFAReturnFloat:
     stp     fp, lr, [sp,#-0x10]!
+    mov     fp, sp
 
     adr     x9, populateFloats
     sub     x9, x9, x2 // x9 -= returnSize; (already 4 bytes per return)
@@ -93,6 +95,7 @@ CallARM64Float:
 CallARM64:
     stp     fp, lr, [sp,#-0x20]!
     str     x20, [sp,#0x10]
+    mov     fp, sp
 
     mov     x20, #0
 
@@ -156,6 +159,7 @@ populateGPRegisterArgsEnd:
 CallARM64Ret128:
     stp     fp, lr, [sp,#-0x20]!
     str     x20, [sp,#0x10]
+    mov     fp, sp
 
     mov     x20, x6
     mov     x6, x7
@@ -171,13 +175,14 @@ CallARM64Ret128:
 
 CallARM64RetInMemory:
     stp     fp, lr, [sp,#-0x10]!
+    mov     fp, sp
 
-    mov x8, x6
-    mov x6, x7
-    mov x7, #0
-    bl CallARM64
+    mov     x8, x6
+    mov     x6, x7
+    mov     x7, #0
+    bl      CallARM64
 
-    mov x0, x8
+    mov     x0, x8
 
     ldp     fp, lr, [sp],#0x10
 
