@@ -916,7 +916,7 @@
 				#undef STDCALL
 				#define STDCALL
 
-				//#define HAS_128_BIT_PRIMITIVES
+				#define HAS_128_BIT_PRIMITIVES
 
 				#define CDECL_RETURN_SIMPLE_IN_MEMORY
 				#define STDCALL_RETURN_SIMPLE_IN_MEMORY
