@@ -41,6 +41,7 @@
 
 .global GetHFAReturnDouble
 .global GetHFAReturnFloat
+.global CallARM64Ret128
 .global CallARM64RetInMemory
 .global CallARM64Double
 .global CallARM64Float
@@ -146,6 +147,22 @@ populateGPRegisterArgsEnd:
     sub     sp, sp, x20
     blr     x15
     add     sp, sp, x20
+
+    ldr     x20, [sp,#0x10]
+    ldp     fp, lr, [sp],#0x20
+
+    ret
+
+CallARM64Ret128:
+    stp     fp, lr, [sp,#-0x20]!
+    str     x20, [sp,#0x10]
+
+    mov     x20, x6
+    mov     x6, x7
+    mov     x7, #0
+    bl      CallARM64
+
+    ldr     x1, [x20]
 
     ldr     x20, [sp,#0x10]
     ldp     fp, lr, [sp],#0x20

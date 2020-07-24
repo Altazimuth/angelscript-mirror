@@ -93,6 +93,12 @@ extern "C" asQWORD CallARM64(
 	const asQWORD *stackArgs,    asQWORD numStackArgs,
 	asFUNCTION_t func
 );
+extern "C" asQWORD CallARM64Ret128(
+	const asQWORD *gpRegArgs,    asQWORD numGPRegArgs,
+	const asQWORD *floatRegArgs, asQWORD numFloatRegArgs,
+	const asQWORD *stackArgs,    asQWORD numStackArgs,
+	asQWORD *higherQWORD,        asFUNCTION_t func
+);
 
 //template<typename T>
 //static inline PushParameter(T parm, asQWORD *const regArgs, asQWORD *const stackArgs, asQWORD &numRegArgs, asQWORD &numStackArgs)
@@ -236,7 +242,12 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	else if( sysFunc->hostReturnInMemory )
 		retQW = CallARM64RetInMemory(gpRegArgs, numGPRegArgs, floatRegArgs, numFloatRegArgs, stackArgs, numStackArgs, retPointer, func);
 	else
-		retQW = CallARM64(gpRegArgs, numGPRegArgs, floatRegArgs, numFloatRegArgs, stackArgs, numStackArgs, func);
+	{
+		if( retType.GetSizeInMemoryBytes() > sizeof(asQWORD) )
+			retQW = CallARM64Ret128(gpRegArgs, numGPRegArgs, floatRegArgs, numFloatRegArgs, stackArgs, numStackArgs, &retQW, func);
+		else
+			retQW = CallARM64(gpRegArgs, numGPRegArgs, floatRegArgs, numFloatRegArgs, stackArgs, numStackArgs, func);
+	}
 
 	return retQW;
 }
