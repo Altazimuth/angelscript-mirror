@@ -67,11 +67,11 @@ GetHFAReturnFloat:
     stp     fp, lr, [sp,#-0x10]!
 
     adr     x9, populateFloats
-    sub     x9, x9, x1 // x9 -= returnSize; (already 4 bytes per return)
+    sub     x9, x9, x2 // x9 -= returnSize; (already 4 bytes per return)
     br      x9
 
-    str     s3, [x0, #0xC]
-    str     s2, [x0, #0x8]
+    str     s3, [x1, #0x4]
+    str     s2, [x1]
     str     s1, [x0, #0x4]
     str     s0, [x0]
 populateFloats:

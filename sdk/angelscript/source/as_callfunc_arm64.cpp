@@ -67,7 +67,7 @@ BEGIN_AS_NAMESPACE
 // x30:    Link register (where to return to)
 
 extern "C" void GetHFAReturnDouble(void *out, asQWORD returnSize);
-extern "C" void GetHFAReturnFloat(void *out, asQWORD returnSize);
+extern "C" void GetHFAReturnFloat(asQWORD *out1, asQWORD *out2, asQWORD returnSize);
 
 extern "C" asQWORD CallARM64RetInMemory(
 	const asQWORD *gpRegArgs,    asQWORD numGPRegArgs,
@@ -214,17 +214,9 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		else
 		{
 			if(structSize <= sizeof(float) * 2)
-				GetHFAReturnFloat(&retQW, structSize);
+				GetHFAReturnFloat(&retQW, nullptr, structSize);
 			else
-			{
-				asQWORD tempBuffer[2];
-				GetHFAReturnFloat(tempBuffer, structSize);
-				retQW = *tempBuffer;
-				if(structSize == sizeof(float) * 4)
-					retQW2 = *(asQWORD*)&tempBuffer[1];
-				else
-					retQW2 = *(asDWORD*)&tempBuffer[1];
-			}
+				GetHFAReturnFloat(&retQW, &retQW2, structSize);
 		}
 	}
 	else if( sysFunc->hostReturnFloat )
