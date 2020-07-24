@@ -108,7 +108,7 @@ extern "C" asQWORD CallARM64Ret128(
 
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2, void *secondObject)
 {
-	//asCScriptEngine *engine = context->m_engine;
+	asCScriptEngine *engine = context->m_engine;
 	const asSSystemFunctionInterface *const sysFunc = descr->sysFuncIntf;
 	const asCDataType &retType = descr->returnType;
 	const asCTypeInfo *const retTypeInfo = retType.GetTypeInfo();
@@ -139,7 +139,29 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 
 		if( parmType.IsObject() && !parmType.IsObjectHandle() && !parmType.IsReference() )
 		{
+			// FIXME: HFAs
+			asUINT parmDWords = parmType.GetSizeInMemoryDWords();
+			asUINT parmQWords = (parmDWords >> 1) + (parmDWords & 1);
 
+			const bool fitsInRegisters = (numGPRegArgs + parmQWords <= GP_ARG_REGISTERS) && parmQWords <= 2;
+			asQWORD *const argsArray = fitsInRegisters ? gpRegArgs : stackArgs;
+			asQWORD &numArgs = fitsInRegisters ? numGPRegArgs : numStackArgs;
+
+			if( (parmTypeInfo->flags & COMPLEX_MASK) )
+			{
+				argsArray[numArgs++] = *(asQWORD*)&args[spos];
+				spos += AS_PTR_SIZE;
+			}
+			else
+			{
+				// Copy the object's memory to the buffer
+				memcpy(&argsArray[numArgs], *(void**)(args+spos), parmType.GetSizeInMemoryBytes());
+
+				// Delete the original memory
+				engine->CallFree(*(char**)(args+spos));
+				spos += AS_PTR_SIZE;
+				numArgs += parmQWords;
+			}
 		}
 		else if( parmType.IsFloatType() && !parmType.IsReference() )
 		{
@@ -167,6 +189,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			asQWORD *const argsArray = fitsInRegisters ? gpRegArgs : stackArgs;
 			asQWORD &numArgs = fitsInRegisters ? numGPRegArgs : numStackArgs;
 
+			// FIXME: Do as above w/ memcpy
 			for( asUINT i = 0; i < parmDWords; i++ )
 			{
 				if( i & 1 )
