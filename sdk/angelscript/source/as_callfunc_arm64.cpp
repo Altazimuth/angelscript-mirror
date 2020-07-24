@@ -66,7 +66,7 @@ BEGIN_AS_NAMESPACE
 // x29:    Frame pointer register
 // x30:    Link register (where to return to)
 
-extern "C" void GetHFAReturnDouble(void *out, asQWORD returnSize);
+extern "C" void GetHFAReturnDouble(asQWORD *out1, asQWORD *out2, asQWORD returnSize);
 extern "C" void GetHFAReturnFloat(asQWORD *out1, asQWORD *out2, asQWORD returnSize);
 
 extern "C" asQWORD CallARM64RetInMemory(
@@ -161,14 +161,14 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			asQWORD *const argsArray = fitsInRegisters ? gpRegArgs : stackArgs;
 			asQWORD &numArgs = fitsInRegisters ? numGPRegArgs : numStackArgs;
 
-			for(asUINT i = 0; i < parmDWords; i++)
+			for( asUINT i = 0; i < parmDWords; i++ )
 			{
-				if(i & 1)
+				if( i & 1 )
 				{
 					argsArray[numArgs++] = *(asQWORD*)&args[spos];
 					spos += 2;
 				}
-				else if(i + 1 == parmDWords)
+				else if( i + 1 == parmDWords )
 				{
 					argsArray[numArgs++] = args[spos++];
 				}
@@ -210,7 +210,14 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 
 		}
 		else if( doubles )
-			GetHFAReturnDouble(structSize > sizeof(double) * 2 ? retPointer : &retQW, structSize);
+		{
+			if( structSize == sizeof(double) )
+				GetHFAReturnDouble(&retQW, nullptr, structSize);
+			else if( structSize == sizeof(double) * 2 )
+				GetHFAReturnDouble(&retQW, &retQW2, structSize);
+			else
+				GetHFAReturnDouble((asQWORD*)retPointer, ((asQWORD*)retPointer) + 1, structSize); // MaxW: I'm lazy
+		}
 		else
 		{
 			if(structSize <= sizeof(float) * 2)

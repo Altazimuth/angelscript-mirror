@@ -55,7 +55,7 @@ GetHFAReturnDouble:
 
     str     d3, [x0, #0x18]
     str     d2, [x0, #0x10]
-    str     d1, [x0, #0x8]
+    str     d1, [x1]
     str     d0, [x0]
 populateDoubles:
 
