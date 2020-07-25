@@ -101,10 +101,29 @@ extern "C" asQWORD CallARM64Ret128(
 );
 
 //template<typename T>
-//static inline PushParameter(T parm, asQWORD *const regArgs, asQWORD *const stackArgs, asQWORD &numRegArgs, asQWORD &numStackArgs)
+//static inline void PushParameter(T parm, asQWORD *const regArgs, asQWORD *const stackArgs, asQWORD &numRegArgs, asQWORD &numStackArgs)
 //{
 //	
 //}
+
+//
+// If it's possible to fit in registers,
+// there may not be enough float register space even if true is returned
+//
+static inline bool IsRegisterHFA(const asCDataType &type)
+{
+	const asCTypeInfo *const typeInfo = type.GetTypeInfo();
+
+	if( typeInfo == nullptr ||
+		(typeInfo->flags & asOBJ_APP_CLASS_ALLFLOATS) == 0 ||
+		type.IsObjectHandle() && type.IsReference() )
+		return false;
+
+	const bool doubles = (typeInfo->flags & asOBJ_APP_CLASS_ALIGN8) != 0;
+	const int maxAllowedSize = doubles ? sizeof(double) * HFA_RET_REGISTERS : sizeof(float) * HFA_RET_REGISTERS;
+
+	return type.GetSizeInMemoryBytes() <= maxAllowedSize;
+}
 
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2, void *secondObject)
 {
@@ -245,22 +264,16 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			stackArgs[numStackArgs++] = (asQWORD)secondObject;
 	}
 
-	if( retTypeInfo && (retTypeInfo->flags & asOBJ_APP_CLASS_ALLFLOATS) )
+	if( IsRegisterHFA(retType) )
 	{
 		// This is to deal with HFAs (Homogeneous Floating-point Aggregates):
 		// ARM64 will place all-float composite types (of equal precision)
 		// with <= 4 members in the float return registers
 
-		const bool doubles = (retTypeInfo->flags & asOBJ_APP_CLASS_ALIGN8) != 0;
-		const int maxAllowedSize = doubles ? sizeof(double) * HFA_RET_REGISTERS : sizeof(float) * HFA_RET_REGISTERS;
 		const int structSize = retType.GetSizeInMemoryBytes();
 
 		CallARM64(gpRegArgs, numGPRegArgs, floatRegArgs, numFloatRegArgs, stackArgs, numStackArgs, func);
-		if( structSize > maxAllowedSize )
-		{
-
-		}
-		else if( doubles )
+		if( (retTypeInfo->flags & asOBJ_APP_CLASS_ALIGN8) != 0 )
 		{
 			if( structSize == sizeof(double) )
 				GetHFAReturnDouble(&retQW, nullptr, structSize);
