@@ -917,6 +917,7 @@
 				#define STDCALL
 
 				#undef GNU_STYLE_VIRTUAL_METHOD
+				#undef AS_NO_THISCALL_FUNCTOR_METHOD
 
 				#define HAS_128_BIT_PRIMITIVES
 

@@ -150,7 +150,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 	{
 		// Get virtual function table from the object pointer
 		vftable = *(asFUNCTION_t**)obj;
-		func = vftable[FuncPtrToUInt(func)>>2];
+		func = vftable[FuncPtrToUInt(func)/sizeof(void*)];
 	}
 
 	asUINT spos = 0;
