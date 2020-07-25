@@ -275,20 +275,13 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		CallARM64(gpRegArgs, numGPRegArgs, floatRegArgs, numFloatRegArgs, stackArgs, numStackArgs, func);
 		if( (retTypeInfo->flags & asOBJ_APP_CLASS_ALIGN8) != 0 )
 		{
-			if( structSize == sizeof(double) )
-				GetHFAReturnDouble(&retQW, nullptr, structSize);
-			else if( structSize == sizeof(double) * 2 )
+			if( structSize <= sizeof(double) * 2 )
 				GetHFAReturnDouble(&retQW, &retQW2, structSize);
 			else
 				GetHFAReturnDouble((asQWORD*)retPointer, ((asQWORD*)retPointer) + 1, structSize); // MaxW: I'm lazy
 		}
 		else
-		{
-			if(structSize <= sizeof(float) * 2)
-				GetHFAReturnFloat(&retQW, nullptr, structSize);
-			else
-				GetHFAReturnFloat(&retQW, &retQW2, structSize);
-		}
+			GetHFAReturnFloat(&retQW, &retQW2, structSize);
 	}
 	else if( sysFunc->hostReturnFloat )
 	{
