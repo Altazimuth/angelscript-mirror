@@ -125,6 +125,21 @@ static inline bool IsRegisterHFA(const asCDataType &type)
 	return type.GetSizeInMemoryBytes() <= maxAllowedSize;
 }
 
+//
+// If it's possible to fit it in registers,
+// if true is returned there is enough space to fit
+//
+static inline bool IsRegisterHFAParameter(const asCDataType &type, const asQWORD numFloatRegArgs)
+{
+	if (!IsRegisterHFA(type) )
+		return false;
+
+	const bool doubles = (type.GetTypeInfo()->flags & asOBJ_APP_CLASS_ALIGN8) != 0;
+	const int registersUsed = type.GetSizeInMemoryDWords() / (doubles ? sizeof(double) : sizeof(float));
+
+	return numFloatRegArgs + registersUsed <= FLOAT_ARG_REGISTERS;
+}
+
 asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, void *obj, asDWORD *args, void *retPointer, asQWORD &retQW2, void *secondObject)
 {
 	asCScriptEngine *engine = context->m_engine;
@@ -180,7 +195,6 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 
 		if( parmType.IsObject() && !parmType.IsObjectHandle() && !parmType.IsReference() )
 		{
-			// FIXME: HFAs
 			asUINT parmDWords = parmType.GetSizeInMemoryDWords();
 			asUINT parmQWords = (parmDWords >> 1) + (parmDWords & 1);
 
@@ -192,6 +206,22 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			{
 				argsArray[numArgs++] = *(asQWORD*)&args[spos];
 				spos += AS_PTR_SIZE;
+			}
+			else if( IsRegisterHFAParameter(parmType, numFloatRegArgs) )
+			{
+				if( (parmTypeInfo->flags & asOBJ_APP_CLASS_ALIGN8) != 0 )
+				{
+					for( asUINT i = 0; i < parmQWords; i++ )
+					{
+						floatRegArgs[numFloatRegArgs++] = *(asQWORD*)&args[spos];
+						spos += 2;
+					}
+				}
+				else
+				{
+					for( asUINT i = 0; i < parmDWords; i++ )
+						floatRegArgs[numFloatRegArgs++] = *(asQWORD*)&args[spos++];
+				}	
 			}
 			else
 			{
@@ -239,9 +269,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 					spos += 2;
 				}
 				else if( i + 1 == parmDWords )
-				{
 					argsArray[numArgs++] = args[spos++];
-				}
 			}
 		}
 	}
@@ -264,7 +292,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			stackArgs[numStackArgs++] = (asQWORD)secondObject;
 	}
 
-	if( IsRegisterHFA(retType) )
+	if( IsRegisterHFA(retType) && !(retTypeInfo->flags & COMPLEX_MASK) )
 	{
 		// This is to deal with HFAs (Homogeneous Floating-point Aggregates):
 		// ARM64 will place all-float composite types (of equal precision)
