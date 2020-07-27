@@ -100,12 +100,6 @@ extern "C" asQWORD CallARM64Ret128(
 	asQWORD *higherQWORD,        asFUNCTION_t func
 );
 
-//template<typename T>
-//static inline void PushParameter(T parm, asQWORD *const regArgs, asQWORD *const stackArgs, asQWORD &numRegArgs, asQWORD &numStackArgs)
-//{
-//	
-//}
-
 //
 // If it's possible to fit in registers,
 // there may not be enough float register space even if true is returned
@@ -212,13 +206,13 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			{
 				if( (parmTypeInfo->flags & asOBJ_APP_CLASS_ALIGN8) != 0 )
 				{
-					asQWORD *contents = *(asQWORD**)&args[argsPos];
+					const asQWORD *const contents = *(asQWORD**)&args[argsPos];
 					for( asUINT i = 0; i < parmQWords; i++ )
 						floatRegArgs[numFloatRegArgs++] = *(asQWORD*)&contents[i];
 				}
 				else
 				{
-					asDWORD *contents = *(asDWORD**)&args[argsPos];
+					const asDWORD *const contents = *(asDWORD**)&args[argsPos];
 					for( asUINT i = 0; i < parmDWords; i++ )
 						floatRegArgs[numFloatRegArgs++] = *(asQWORD*)&contents[i];
 				}
