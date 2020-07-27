@@ -131,7 +131,7 @@ static inline bool IsRegisterHFA(const asCDataType &type)
 //
 static inline bool IsRegisterHFAParameter(const asCDataType &type, const asQWORD numFloatRegArgs)
 {
-	if (!IsRegisterHFA(type) )
+	if( !IsRegisterHFA(type) )
 		return false;
 
 	const bool doubles = (type.GetTypeInfo()->flags & asOBJ_APP_CLASS_ALIGN8) != 0;
@@ -211,17 +211,17 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			{
 				if( (parmTypeInfo->flags & asOBJ_APP_CLASS_ALIGN8) != 0 )
 				{
+					asQWORD *contents = *(asQWORD**)&args[spos];
 					for( asUINT i = 0; i < parmQWords; i++ )
-					{
-						floatRegArgs[numFloatRegArgs++] = *(asQWORD*)&args[spos];
-						spos += 2;
-					}
+						floatRegArgs[numFloatRegArgs++] = *(asQWORD*)&contents[i];
 				}
 				else
 				{
+					asDWORD *contents = *(asDWORD**)&args[spos];
 					for( asUINT i = 0; i < parmDWords; i++ )
-						floatRegArgs[numFloatRegArgs++] = *(asQWORD*)&args[spos++];
-				}	
+						floatRegArgs[numFloatRegArgs++] = *(asQWORD*)&contents[i];
+				}
+				spos++;
 			}
 			else
 			{
