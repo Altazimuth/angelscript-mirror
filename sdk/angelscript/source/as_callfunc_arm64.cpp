@@ -198,7 +198,8 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			asUINT parmDWords = parmType.GetSizeInMemoryDWords();
 			asUINT parmQWords = (parmDWords >> 1) + (parmDWords & 1);
 
-			const bool fitsInRegisters = (numGPRegArgs + parmQWords <= GP_ARG_REGISTERS) && parmQWords <= 2;
+			const bool passedAsPointer = parmQWords <= 2;
+			const bool fitsInRegisters = passedAsPointer ? (numGPRegArgs < GP_ARG_REGISTERS) : (numGPRegArgs + parmQWords <= GP_ARG_REGISTERS);
 			asQWORD *const argsArray = fitsInRegisters ? gpRegArgs : stackArgs;
 			asQWORD &numArgs = fitsInRegisters ? numGPRegArgs : numStackArgs;
 
