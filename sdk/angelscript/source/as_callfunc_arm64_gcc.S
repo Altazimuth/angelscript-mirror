@@ -29,12 +29,9 @@
 //
 
 
-// Assembly routines for the ARM64/AArch64 call convention used for Windows 10 on ARM
-// Written by Max Waine in July 2020, based on as_callfunc_arm_msvc.asm
-
-// MSVC currently doesn't support inline assembly for the ARM64 platform,
-// and if they're treating it like x64 /won't/ ever support inline assembly,
-// so this separate file is needed.
+// Assembly routines for the ARM64/AArch64 call convention used for Linux
+// Written by Max Waine in July 2020, based on as_callfunc_arm_msvc.asm,
+// with assistance & guidance provided by Sir Kane
 
 // Compile with GCC/GAS
 

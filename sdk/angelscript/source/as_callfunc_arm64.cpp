@@ -187,7 +187,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		func = vftable[FuncPtrToUInt(func)/sizeof(void*)];
 	}
 
-	asUINT spos = 0;
+	asUINT argsPos = 0;
 	for( asUINT n = 0; n < descr->parameterTypes.GetLength(); n++ )
 	{
 		const asCDataType &parmType = descr->parameterTypes[n];
@@ -205,51 +205,52 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 
 			if( (parmTypeInfo->flags & COMPLEX_MASK) )
 			{
-				argsArray[numArgs++] = *(asQWORD*)&args[spos];
-				spos += AS_PTR_SIZE;
+				argsArray[numArgs++] = *(asQWORD*)&args[argsPos];
+				argsPos += AS_PTR_SIZE;
 			}
 			else if( IsRegisterHFAParameter(parmType, numFloatRegArgs) )
 			{
 				if( (parmTypeInfo->flags & asOBJ_APP_CLASS_ALIGN8) != 0 )
 				{
-					asQWORD *contents = *(asQWORD**)&args[spos];
+					asQWORD *contents = *(asQWORD**)&args[argsPos];
 					for( asUINT i = 0; i < parmQWords; i++ )
 						floatRegArgs[numFloatRegArgs++] = *(asQWORD*)&contents[i];
 				}
 				else
 				{
-					asDWORD *contents = *(asDWORD**)&args[spos];
+					asDWORD *contents = *(asDWORD**)&args[argsPos];
 					for( asUINT i = 0; i < parmDWords; i++ )
 						floatRegArgs[numFloatRegArgs++] = *(asQWORD*)&contents[i];
 				}
-				spos++;
+				engine->CallFree(*(char**)(args+argsPos));
+				argsPos += AS_PTR_SIZE;
 			}
 			else
 			{
 				// Copy the object's memory to the buffer
-				memcpy(&argsArray[numArgs], *(void**)(args+spos), parmType.GetSizeInMemoryBytes());
+				memcpy(&argsArray[numArgs], *(void**)(args+argsPos), parmType.GetSizeInMemoryBytes());
 
 				// Delete the original memory
-				engine->CallFree(*(char**)(args+spos));
-				spos += AS_PTR_SIZE;
+				engine->CallFree(*(char**)(args+argsPos));
+				argsPos += AS_PTR_SIZE;
 				numArgs += parmQWords;
 			}
 		}
 		else if( parmType.IsFloatType() && !parmType.IsReference() )
 		{
 			if( numFloatRegArgs >= FLOAT_ARG_REGISTERS )
-				stackArgs[numStackArgs++] = args[spos];
+				stackArgs[numStackArgs++] = args[argsPos];
 			else
-				floatRegArgs[numFloatRegArgs++] = args[spos];
-			spos++;
+				floatRegArgs[numFloatRegArgs++] = args[argsPos];
+			argsPos++;
 		}
 		else if( parmType.IsDoubleType() && !parmType.IsReference() )
 		{
 			if( numFloatRegArgs >= FLOAT_ARG_REGISTERS )
-				stackArgs[numStackArgs++] = *(asQWORD*)&args[spos];
+				stackArgs[numStackArgs++] = *(asQWORD*)&args[argsPos];
 			else
-				floatRegArgs[numFloatRegArgs++] = *(asQWORD*)&args[spos];
-			spos += 2;
+				floatRegArgs[numFloatRegArgs++] = *(asQWORD*)&args[argsPos];
+			argsPos += 2;
 		}
 		else
 		{
@@ -261,16 +262,15 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			asQWORD *const argsArray = fitsInRegisters ? gpRegArgs : stackArgs;
 			asQWORD &numArgs = fitsInRegisters ? numGPRegArgs : numStackArgs;
 
-			// FIXME: Do as above w/ memcpy
 			for( asUINT i = 0; i < parmDWords; i++ )
 			{
 				if( i & 1 )
 				{
-					argsArray[numArgs++] = *(asQWORD*)&args[spos];
-					spos += 2;
+					argsArray[numArgs++] = *(asQWORD*)&args[argsPos];
+					argsPos += 2;
 				}
 				else if( i + 1 == parmDWords )
-					argsArray[numArgs++] = args[spos++];
+					argsArray[numArgs++] = args[argsPos++];
 			}
 		}
 	}

@@ -932,8 +932,6 @@
 				#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 5
 				#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE    5
 				#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE  5
-
-				// TODO: MORE HERE?
 			#endif
 
 		#elif defined(__mips__)
