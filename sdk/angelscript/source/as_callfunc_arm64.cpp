@@ -262,16 +262,9 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			asQWORD *const argsArray = fitsInRegisters ? gpRegArgs : stackArgs;
 			asQWORD &numArgs = fitsInRegisters ? numGPRegArgs : numStackArgs;
 
-			for( asUINT i = 0; i < parmDWords; i++ )
-			{
-				if( i & 1 )
-				{
-					argsArray[numArgs++] = *(asQWORD*)&args[argsPos];
-					argsPos += 2;
-				}
-				else if( i + 1 == parmDWords )
-					argsArray[numArgs++] = args[argsPos++];
-			}
+			memcpy(&argsArray[numArgs], (void*)(args+argsPos), parmDWords * 4);
+			argsPos += parmDWords;
+			numArgs += parmQWords;
 		}
 	}
 
@@ -307,7 +300,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 			if( structSize <= sizeof(double) * 2 )
 				GetHFAReturnDouble(&retQW, &retQW2, structSize);
 			else
-				GetHFAReturnDouble((asQWORD*)retPointer, ((asQWORD*)retPointer) + 1, structSize); // MaxW: I'm lazy
+				GetHFAReturnDouble((asQWORD*)retPointer, ((asQWORD*)retPointer) + 1, structSize);
 		}
 		else
 			GetHFAReturnFloat(&retQW, &retQW2, structSize);
