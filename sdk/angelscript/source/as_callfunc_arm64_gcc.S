@@ -36,8 +36,10 @@
 // and if they're treating it like x64 /won't/ ever support inline assembly,
 // so this separate file is needed.
 
-// Compile with Microsoft ARM64 assembler (armasm64)
-// http://msdn.microsoft.com/en-us/library/hh873190.aspx
+// Compile with GCC/GAS
+
+.arch armv8-a
+.text
 
 .global GetHFAReturnDouble
 .global GetHFAReturnFloat
@@ -47,10 +49,16 @@
 .global CallARM64Float
 .global CallARM64
 
-GetHFAReturnDouble:
-    stp     fp, lr, [sp,#-0x10]!
-    mov     fp, sp
+.type GetHFAReturnDouble, %function
+.type GetHFAReturnFloat, %function
+.type CallARM64Ret128, %function
+.type CallARM64RetInMemory, %function
+.type CallARM64Double, %function
+.type CallARM64Float, %function
+.type CallARM64, %function
 
+.align  2
+GetHFAReturnDouble:
     adr     x9, populateDoubles
     sub     x9, x9, x1, lsr 1 // x9 -= returnSize >> 1; (/2 because double is 2x instruction size)
     br      x9
@@ -61,14 +69,10 @@ GetHFAReturnDouble:
     str     d0, [x0]
 populateDoubles:
 
-    ldp     fp, lr, [sp],#0x10
-
     ret
 
+.align  2
 GetHFAReturnFloat:
-    stp     fp, lr, [sp,#-0x10]!
-    mov     fp, sp
-
     adr     x9, populateFloats
     sub     x9, x9, x2 // x9 -= returnSize; (already 4 bytes per return)
     br      x9
@@ -79,8 +83,6 @@ GetHFAReturnFloat:
     str     s0, [x0]
 populateFloats:
 
-    ldp     fp, lr, [sp],#0x10
-
     ret
 
 
@@ -90,11 +92,17 @@ populateFloats:
 //    const asQWORD *stackArgs,    asQWORD numStackArgs,
 //    asFUNCTION_t func
 //)
+.align  2
 CallARM64Double:
 CallARM64Float:
 CallARM64:
+    .cfi_startproc
     stp     fp, lr, [sp,#-0x20]!
     str     x20, [sp,#0x10]
+    .cfi_def_cfa_offset 0x20
+    .cfi_offset 20,  0x10
+    .cfi_offset fp, -0x20
+    .cfi_offset lr, -0x18
     mov     fp, sp
 
     mov     x20, #0
@@ -154,11 +162,22 @@ populateGPRegisterArgsEnd:
     ldr     x20, [sp,#0x10]
     ldp     fp, lr, [sp],#0x20
 
+    .cfi_restore lr
+	.cfi_restore fp
+    .cfi_restore 20
+	.cfi_def_cfa_offset 0
     ret
+    .cfi_endproc
 
+.align  2
 CallARM64Ret128:
+    .cfi_startproc
     stp     fp, lr, [sp,#-0x20]!
     str     x20, [sp,#0x10]
+    .cfi_def_cfa_offset 0x20
+    .cfi_offset 20,  0x10
+    .cfi_offset fp, -0x20
+    .cfi_offset lr, -0x18
     mov     fp, sp
 
     mov     x20, x6
@@ -171,11 +190,21 @@ CallARM64Ret128:
     ldr     x20, [sp,#0x10]
     ldp     fp, lr, [sp],#0x20
 
+    .cfi_restore lr
+	.cfi_restore fp
+    .cfi_restore 20
+	.cfi_def_cfa_offset 0
     ret
+    .cfi_endproc
 
+.align  2
 CallARM64RetInMemory:
+    .cfi_startproc
     stp     fp, lr, [sp,#-0x10]!
     mov     fp, sp
+    .cfi_def_cfa_offset 0x10
+    .cfi_offset fp, -0x10
+    .cfi_offset lr, -0x08
 
     mov     x8, x6
     mov     x6, x7
@@ -186,4 +215,8 @@ CallARM64RetInMemory:
 
     ldp     fp, lr, [sp],#0x10
 
+    .cfi_restore lr
+	.cfi_restore fp
+	.cfi_def_cfa_offset 0
     ret
+    .cfi_endproc
