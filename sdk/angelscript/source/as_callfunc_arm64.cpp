@@ -189,8 +189,8 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 
 		if( parmType.IsObject() && !parmType.IsObjectHandle() && !parmType.IsReference() )
 		{
-			asUINT parmDWords = parmType.GetSizeInMemoryDWords();
-			asUINT parmQWords = (parmDWords >> 1) + (parmDWords & 1);
+			const asUINT parmDWords = parmType.GetSizeInMemoryDWords();
+			const asUINT parmQWords = (parmDWords >> 1) + (parmDWords & 1);
 
 			const bool passedAsPointer = parmQWords <= 2;
 			const bool fitsInRegisters = passedAsPointer ? (numGPRegArgs < GP_ARG_REGISTERS) : (numGPRegArgs + parmQWords <= GP_ARG_REGISTERS);
@@ -249,8 +249,8 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 		else
 		{
 			// Copy the value directly
-			asUINT parmDWords = parmType.GetSizeOnStackDWords();
-			asUINT parmQWords = (parmDWords >> 1) + (parmDWords & 1);
+			const asUINT parmDWords = parmType.GetSizeOnStackDWords();
+			const asUINT parmQWords = (parmDWords >> 1) + (parmDWords & 1);
 
 			const bool fitsInRegisters = numGPRegArgs + parmQWords <= GP_ARG_REGISTERS;
 			asQWORD *const argsArray = fitsInRegisters ? gpRegArgs : stackArgs;
