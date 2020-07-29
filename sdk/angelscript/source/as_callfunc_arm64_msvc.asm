@@ -40,91 +40,70 @@
 ; http://msdn.microsoft.com/en-us/library/hh873190.aspx
 
     AREA    |.rdata|, DATA, READONLY
-    EXPORT  arm64Func
+    EXPORT  GetHFAReturnDouble
+    EXPORT  GetHFAReturnFloat
+    EXPORT  CallARM64Ret128
+    EXPORT  CallARM64RetInMemory
     EXPORT  CallARM64Double
     EXPORT  CallARM64Float
     EXPORT  CallARM64
 
-    AREA    |.text|, CODE, ALIGN=3
+    AREA    |.text|, CODE, ALIGN=2
 
-    ALIGN   8
-arm64Func PROC
-    stp     x22, lr, [sp,#-0x30]! ; Store non-volatile register and lr
-
-    mov     x13, x0 ; arg table
-    mov     x14, x1 ; arg size (in bytes)
-    mov     x15, x2 ; function address
-    mov     x22, #0 ; Called function's stack pointer offset
-
-    ; If 0 args jump to end.  If >=8 we can skip dynamic jump
-    cbz     x14, |arm64Func@noMoreArgs|
-    cmp     x14, #8*8
-    bge     |arm64Func@populateRegisterArgsStart|
-
-    ; Calculate amount to jump forward, avoiding pointless instructions
-    adr     x9, |arm64Func@populateRegisterArgsEnd|
-    sub     x9, x9, x14,lsl 1
+    ALIGN   4
+GetHFAReturnDouble PROC
+    adr     x9, |populateDoubles|
+    sub     x9, x9, x1, lsr 1 ; x9 -= returnSize >> 1; (/2 because double is 2x instruction size)
     br      x9
 
-    ; Load args
-|arm64Func@populateRegisterArgsStart|
-    ldr     x7, [x13],#8
-    ldr     x6, [x13],#8
-    ldr     x5, [x13],#8
-    ldr     x4, [x13],#8
-    ldr     x3, [x13],#8
-    ldr     x2, [x13],#8
-    ldr     x1, [x13],#8
-    ldr     x0, [x13],#8
-|arm64Func@populateRegisterArgsEnd|
-
-    ; Jump to end if 8 or fewer args
-    subs    x14, x14, #8*8 ; TODO: Correctness check, should be 8*8 and not 16 because multiplication is later
-    ble     |arm64Func@noMoreArgs|
-
-    ; Load the rest of the arguments onto the stack. The earlier
-    ; reduction of x14 by 8*8 skips registers already loaded into x0-x7
-    lsl     x14, x14, #1 ; multiply by 2 (<<= 1)
-    sub     sp, sp, x14
-    mov     x22, x14
-    ; Bear in mind variables must be aligned at 16 bytes
-|arm64Func@stackArgsLoop|
-    ldr     x9,  [x13],#8
-    str     x9,  [sp],#16
-    subs    x14, x14,#16
-    bne     |arm64Func@stackArgsLoop|
-
-    ; Call the actual function
-|arm64Func@noMoreArgs|
-    sub     sp, sp, x22
-    blr     x15
-    add     sp, sp, x22
-
-    ldp     x22, lr, [sp],#0x30 ; Restore non-volatile register and lr
+    str     d3, [x0, #0x18]
+    str     d2, [x0, #0x10]
+    str     d1, [x1]
+    str     d0, [x0]
+|populateDoubles|
 
     ret
-    ENDP ; arm64Func
+    ENDP ; GetHFAReturnDouble
+
+    ALIGN   4
+GetHFAReturnFloat PROC
+    adr     x9, |populateFloats|
+    sub     x9, x9, x2 // x9 -= returnSize; (already 4 bytes per return)
+    br      x9
+
+    str     s3, [x1, #0x4]
+    str     s2, [x1]
+    str     s1, [x0, #0x4]
+    str     s0, [x0]
+|populateFloats|
+
+    ret
+    ENDP ; GetHFAReturnFloat
 
 
-;asQWORD CallARM64(
+;[returnType] CallARM64[type](
 ;    const asQWORD *gpRegArgs,    asQWORD numGPRegArgs,
 ;    const asQWORD *floatRegArgs, asQWORD numFloatRegArgs,
 ;    const asQWORD *stackArgs,    asQWORD numStackArgs,
 ;    asFUNCTION_t func
 ;)
-    ALIGN   8
+    ALIGN   4
 CallARM64Double PROC
-    bl CallARM64
+    stp     fp, lr, [sp,#-0x10]!
+    bl      CallARM64
+    ldp     fp, lr, [sp,#-0x10]!
     ret
-    ENDP
+    ENDP ; CallARM64Double
 
-    ALIGN   8
+    ALIGN   4
 CallARM64Float PROC
-    bl CallARM64
+    stp     fp, lr, [sp,#-0x10]!
+    bl      CallARM64
+    ldp     fp, lr, [sp,#-0x10]!
     ret
-    ENDP
+    ENDP ; CallARM64Float
 
-    ALIGN   8
+    ALIGN   4
 CallARM64 PROC
     stp     fp, lr, [sp,#-0x20]!
     str     x20, [sp,#0x10]
@@ -188,5 +167,39 @@ CallARM64 PROC
 
     ret
     ENDP ; CallARM64
+
+    ALIGN   4
+CallARM64Ret128 PROC
+    stp     fp, lr, [sp,#-0x20]!
+    str     x20, [sp,#0x10]
+    mov     fp, sp
+
+    mov     x20, x6
+    mov     x6, x7
+    mov     x7, #0
+    bl      CallARM64
+
+    str     x1, [x20]
+
+    ldr     x20, [sp,#0x10]
+    ldp     fp, lr, [sp],#0x20
+
+    ret ; CallARM64Ret128
+
+    ALIGN   4
+CallARM64RetInMemory PROC
+    stp     fp, lr, [sp,#-0x10]!
+    mov     fp, sp
+
+    mov     x8, x6
+    mov     x6, x7
+    mov     x7, #0
+    bl      CallARM64
+
+    mov     x0, x8
+
+    ldp     fp, lr, [sp],#0x10
+
+    ret ; CallARM64RetInMemory
 
     END
