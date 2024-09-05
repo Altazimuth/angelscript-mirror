@@ -48,6 +48,85 @@
     EXPORT  CallARM64Float
     EXPORT  CallARM64
 
+;
+; Unwinding Info
+;
+    AREA    |.pdata|, PDATA
+|$pdata$CallARM64Double| DCD |$CallARM64Double_Start|
+    DCD |$unwind$CallARM64Double|
+
+    AREA    |.xdata|, DATA
+|$unwind$CallARM64Double| DCD 0x8400004
+    DCD     0x2
+    DCD     0xe3e3e481
+    ;Code Words[1], Epilog Count[1], E[0], X[0], Function Length[4]=16 bytes
+    ;Epilog Start Index[0], Epilog Start Offset[2]=8 bytes
+    ;save_fplr_x 0x10 (pre-indexed store): 10 000001
+    ;end: 11100100
+    ;nop: 11100011
+    ;nop: 11100011
+
+    AREA    |.pdata|, PDATA
+|$pdata$CallARM64Float| DCD |$CallARM64Float_Start|
+    DCD |$unwind$CallARM64Float|
+
+    AREA    |.xdata|, DATA
+|$unwind$CallARM64Float| DCD 0x8400004
+    DCD     0x2
+    DCD     0xe3e3e481
+    ;Code Words[1], Epilog Count[1], E[0], X[0], Function Length[4]=16 bytes
+    ;Epilog Start Index[0], Epilog Start Offset[2]=8 bytes
+    ;save_fplr_x 0x10 (pre-indexed store): 10 000001
+    ;end: 11100100
+    ;nop: 11100011
+    ;nop: 11100011
+
+    AREA    |.pdata|, PDATA
+|$pdata$CallARM64| DCD |$CallARM64_Start|
+    DCD |$unwind$CallARM64|
+
+    AREA    |.xdata|, DATA
+|$unwind$CallARM64| DCD 0x840002b
+    DCD     0x28
+    DCD     0xe4d04283
+    ;Code Words[1], Epilog Count[1], E[0], X[0], Function Length[43]=172 bytes
+    ;Epilog Start Index[0], Epilog Start Offset[40]=160 bytes
+    ;save_fplr_x 0x20 (pre-indexed store): 10 000011
+    ;save_reg: 110100 0001 000010
+    ;end: 11100100
+
+    AREA    |.pdata|, PDATA
+|$pdata$CallARM64Ret128| DCD |$CallARM64Ret128_Start|
+    DCD |$unwind$CallARM64Ret128|
+
+    AREA    |.xdata|, DATA
+|$unwind$CallARM64Ret128| DCD 0x840000b
+    DCD     0x8
+    DCD     0xe4d04283
+    ;Code Words[1], Epilog Count[1], E[0], X[0], Function Length[11]=44 bytes
+    ;Epilog Start Index[0], Epilog Start Offset[8]=32 bytes
+    ;save_fplr_x 0x20 (pre-indexed store): 10 000011
+    ;save_reg: 110100 0001 000010
+    ;end: 11100100
+
+    AREA    |.pdata|, PDATA
+|$pdata$CallARM64RetInMemory| DCD |$CallARM64RetInMemory_Start|
+    DCD |$unwind$CallARM64RetInMemory|
+
+    AREA    |.xdata|, DATA
+|$unwind$CallARM64RetInMemory| DCD 0x8400009
+    DCD     0x2
+    DCD     0xe3e3e481
+    ;Code Words[1], Epilog Count[1], E[0], X[0], Function Length[9]=36 bytes
+    ;Epilog Start Index[0], Epilog Start Offset[7]=28 bytes
+    ;save_fplr_x 0x10 (pre-indexed store): 10 000001
+    ;end: 11100100
+    ;nop: 11100011
+    ;nop: 11100011
+;
+; Actual Code
+;
+
     AREA    |.text|, CODE, ARM64, ALIGN=2
 
     ALIGN   4
@@ -89,7 +168,8 @@ GetHFAReturnFloat PROC
 ;)
     ALIGN   4
 CallARM64Double PROC
-    stp     fp, lr, [sp,#-0x10]!
+|$CallARM64Double_Start|
+    stp     fp, lr, [sp,#-0x10]! ; save_fplr_x 0x10 (pre-indexed store): 10 000001
     bl      CallARM64
     ldp     fp, lr, [sp],#0x10
     ret
@@ -97,7 +177,8 @@ CallARM64Double PROC
 
     ALIGN   4
 CallARM64Float PROC
-    stp     fp, lr, [sp,#-0x10]!
+|$CallARM64Float_Start|
+    stp     fp, lr, [sp,#-0x10]! ; save_fplr_x 0x10 (pre-indexed store): 10 000001
     bl      CallARM64
     ldp     fp, lr, [sp],#0x10
     ret
@@ -105,12 +186,13 @@ CallARM64Float PROC
 
     ALIGN   4
 CallARM64 PROC
-    stp     fp, lr, [sp,#-0x20]!
-    str     x20, [sp,#0x10]
+|$CallARM64_Start|
+    stp     fp, lr, [sp,#-0x20]! ; save_fplr_x 0x20 (pre-indexed store): 10 000011
+    str     x20, [sp,#0x10]      ; save_reg: 110100 01 000010
 
     mov     fp, sp
 
-    mov     x20, #0;
+    mov     x20, #0
 
     cbz     x5, |stackArgsLoopEnd|
 
@@ -172,8 +254,9 @@ CallARM64 PROC
 
     ALIGN   4
 CallARM64Ret128 PROC
-    stp     fp, lr, [sp,#-0x20]!
-    str     x20, [sp,#0x10]
+|$CallARM64Ret128_Start|
+    stp     fp, lr, [sp,#-0x20]! ; save_fplr_x 0x20 (pre-indexed store): 10 000011
+    str     x20, [sp,#0x10]      ; save_reg: 110100 0001 000010
     mov     fp, sp
 
     mov     x20, x6
@@ -191,7 +274,8 @@ CallARM64Ret128 PROC
 
     ALIGN   4
 CallARM64RetInMemory PROC
-    stp     fp, lr, [sp,#-0x10]!
+|$CallARM64RetInMemory_Start|
+    stp     fp, lr, [sp,#-0x10]! ; save_fplr_x 0x10 (pre-indexed store): 10 000001
     mov     fp, sp
 
     mov     x8, x6
