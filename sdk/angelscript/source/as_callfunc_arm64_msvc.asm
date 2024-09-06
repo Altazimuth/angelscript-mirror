@@ -114,11 +114,11 @@
     DCD |$unwind$CallARM64RetInMemory|
 
     AREA    |.xdata|, DATA
-|$unwind$CallARM64RetInMemory| DCD 0x8400008
-    DCD     0x6
+|$unwind$CallARM64RetInMemory| DCD 0x8400009
+    DCD     0x7
     DCD     0xe3e3e481
-    ;Code Words[1], Epilog Count[1], E[0], X[0], Function Length[8]=32 bytes
-    ;Epilog Start Index[0], Epilog Start Offset[6]=24 bytes
+    ;Code Words[1], Epilog Count[1], E[0], X[0], Function Length[9]=36 bytes
+    ;Epilog Start Index[0], Epilog Start Offset[7]=28 bytes
     ;save_fplr_x 0x10 (pre-indexed store): 10 000001
     ;end: 11100100
     ;nop: 11100011
