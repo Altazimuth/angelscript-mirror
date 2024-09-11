@@ -439,7 +439,7 @@
 		#pragma warning( disable : 4786 )
 	#endif
 
-	#ifdef _M_X64
+	#if defined(_M_X64) || defined(_M_ARM64)
 		#define MULTI_BASE_OFFSET(x) (*((asDWORD*)(&x)+2))
 		#define VIRTUAL_BASE_OFFSET(x) (*((asDWORD*)(&x)+4))
 	#else
@@ -554,6 +554,11 @@
 		//#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 5
 		//#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE    5
 		//#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE  5
+
+		//#undef COMPLEX_MASK
+		//#define COMPLEX_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR | asOBJ_APP_ARRAY)
+		//#undef COMPLEX_RETURN_MASK
+		//#define COMPLEX_RETURN_MASK (asOBJ_APP_CLASS_DESTRUCTOR | asOBJ_APP_CLASS_COPY_CONSTRUCTOR | asOBJ_APP_ARRAY)
 	#endif
 
 	#ifndef COMPLEX_MASK
