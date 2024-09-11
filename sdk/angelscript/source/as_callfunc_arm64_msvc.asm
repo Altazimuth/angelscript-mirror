@@ -148,7 +148,7 @@ $FuncName
     blr     x15
     add     sp, sp, x20
 
-    PROLOG_SAVE_REG         x20, #0x10
+    EPILOG_RESTORE_REG      x20, #0x10
     EPILOG_RESTORE_REG_PAIR fp, lr, #0x20!
 
     ret
@@ -156,8 +156,8 @@ $FuncName
 
     CFG_ALIGN
     LEAF_ENTRY CallARM64Ret128
-    stp     fp, lr, [sp,#-0x20]!
-    str     x20, [sp,#0x10]
+    PROLOG_SAVE_REG_PAIR    fp, lr, #-0x20!
+    PROLOG_SAVE_REG         x20, #0x10
     mov     fp, sp
 
     mov     x20, x6
