@@ -219,6 +219,9 @@
 // AS_ARM64
 // Use assembler code for the ARM64/AArch64 CPU family
 
+// AS_ARM64_MSVC
+// Use MSVC assembler code for ARM64/AArch64 CPU family
+
 // AS_RISCV64
 // Use assembler code for the RISC-V 64bit CPU family
 
@@ -531,8 +534,26 @@
 
 	#if defined(_M_ARM64)
 		#define AS_ARM64
+		#define AS_ARM64_MSVC
 
-		// TODO: MORE HERE
+		#undef STDCALL
+		#define STDCALL
+
+		#undef AS_NO_THISCALL_FUNCTOR_METHOD
+
+		#define HAS_128_BIT_PRIMITIVES
+
+		//#define CDECL_RETURN_SIMPLE_IN_MEMORY
+		//#define STDCALL_RETURN_SIMPLE_IN_MEMORY
+		//#define THISCALL_RETURN_SIMPLE_IN_MEMORY
+		//
+		//#undef THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+		//#undef CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+		//#undef STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE
+		//
+		//#define THISCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE 5
+		//#define CDECL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE    5
+		//#define STDCALL_RETURN_SIMPLE_IN_MEMORY_MIN_SIZE  5
 	#endif
 
 	#ifndef COMPLEX_MASK
